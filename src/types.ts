@@ -12,6 +12,11 @@ export enum AppTab {
   INSIGHTS = "insights",
 }
 
+export enum Language {
+  EN = "en",
+  HI = "hi",
+}
+
 export interface IncomeEntry {
   id: string;
   date: string;
