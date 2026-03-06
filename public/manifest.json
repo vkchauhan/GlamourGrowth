@@ -8,15 +8,15 @@
   "theme_color": "#1A1A1A",
   "icons": [
     {
-      "src": "https://picsum.photos/seed/glamour/192/192",
+      "src": "https://placehold.co/192x192/1A1A1A/C5A059.png?text=GG",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://picsum.photos/seed/glamour/512/512",
+      "src": "https://placehold.co/512x512/1A1A1A/C5A059.png?text=Glamour+Growth",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
