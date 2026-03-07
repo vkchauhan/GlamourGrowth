@@ -99,6 +99,8 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
       
       if (err.code === 'auth/billing-not-enabled') {
         errorMessage = "Billing not enabled: Please go to Firebase Console and link a billing account (Blaze Plan) to use Phone Authentication.";
+      } else if (err.code === 'auth/captcha-check-failed') {
+        errorMessage = "Domain not authorized: Please add this app's domain to 'Authorized Domains' in your Firebase Authentication settings.";
       } else if (err.code === 'auth/network-request-failed' || errorMessage.includes('network')) {
         errorMessage = "Network error: Please check your internet connection or disable ad-blockers/VPNs that might be blocking Google services.";
       }
@@ -203,6 +205,24 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
                       >
                         Refresh Page
                       </button>
+                    </div>
+                  )}
+                  {error.includes("Domain not authorized") && (
+                    <div className="space-y-2">
+                      <p className="text-[10px] text-[#8E8E8E] leading-relaxed">
+                        Copy this domain and add it to <b>Authentication &gt; Settings &gt; Authorized domains</b> in Firebase Console:
+                      </p>
+                      <code className="block p-2 bg-black/5 rounded text-[10px] break-all">
+                        {window.location.hostname}
+                      </code>
+                      <a 
+                        href="https://console.firebase.google.com/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-premium-gold text-[10px] font-bold uppercase tracking-widest hover:underline"
+                      >
+                        Open Firebase Console
+                      </a>
                     </div>
                   )}
                   {error.includes("Billing not enabled") && (
