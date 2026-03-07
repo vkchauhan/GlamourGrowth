@@ -32,34 +32,34 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
 
   const recaptchaRef = useRef<any>(null);
 
-  useEffect(() => {
-    const initRecaptcha = async () => {
-      try {
-        if (!recaptchaRef.current) {
-          const container = document.getElementById('recaptcha-container');
-          if (!container) {
-            console.error("reCAPTCHA container not found");
-            return;
-          }
-          
-          recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            'size': 'invisible',
-            'callback': () => {
-              // reCAPTCHA solved
-            },
-            'expired-callback': () => {
-              setError("reCAPTCHA expired. Please try again.");
-            }
-          });
-          
-          await recaptchaRef.current.render();
+  const initRecaptcha = async () => {
+    try {
+      if (!recaptchaRef.current) {
+        const container = document.getElementById('recaptcha-container');
+        if (!container) {
+          console.error("reCAPTCHA container not found");
+          return;
         }
-      } catch (err: any) {
-        console.error("reCAPTCHA init error:", err);
-        setError("Failed to initialize security check. Please check your internet connection or disable ad-blockers.");
+        
+        recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          'size': 'invisible',
+          'callback': () => {
+            // reCAPTCHA solved
+          },
+          'expired-callback': () => {
+            setError("reCAPTCHA expired. Please try again.");
+          }
+        });
+        
+        await recaptchaRef.current.render();
       }
-    };
+    } catch (err: any) {
+      console.error("reCAPTCHA init error:", err);
+      setError("Security check failed to load. This is often caused by ad-blockers or network restrictions. Please disable any ad-blockers and try again.");
+    }
+  };
 
+  useEffect(() => {
     initRecaptcha();
 
     return () => {
@@ -113,13 +113,7 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
           recaptchaRef.current.clear();
           recaptchaRef.current = null;
           // Trigger re-init
-          const container = document.getElementById('recaptcha-container');
-          if (container) {
-            recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-              'size': 'invisible'
-            });
-            await recaptchaRef.current.render();
-          }
+          initRecaptcha();
         } catch (e) {
           console.error("Error resetting reCAPTCHA:", e);
         }
@@ -194,17 +188,28 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
               {error && (
                 <div className="space-y-2">
                   <p className="text-red-500 text-sm font-medium italic">{error}</p>
-                  {(error.includes("security") || error.includes("Network")) && (
+                  {(error.includes("security") || error.includes("Network") || error.includes("Security check")) && (
                     <div className="space-y-2">
                       <p className="text-[10px] text-[#8E8E8E] leading-relaxed">
                         Tip: Try disabling ad-blockers or checking your VPN/Firewall settings.
                       </p>
-                      <button 
-                        onClick={() => window.location.reload()}
-                        className="text-premium-gold text-[10px] font-bold uppercase tracking-widest hover:underline"
-                      >
-                        Refresh Page
-                      </button>
+                      <div className="flex gap-4">
+                        <button 
+                          onClick={() => {
+                            setError("");
+                            initRecaptcha();
+                          }}
+                          className="text-premium-gold text-[10px] font-bold uppercase tracking-widest hover:underline"
+                        >
+                          Retry Security Check
+                        </button>
+                        <button 
+                          onClick={() => window.location.reload()}
+                          className="text-[#8E8E8E] text-[10px] font-bold uppercase tracking-widest hover:underline"
+                        >
+                          Refresh Page
+                        </button>
+                      </div>
                     </div>
                   )}
                   {error.includes("Domain not authorized") && (
