@@ -17,7 +17,9 @@ import {
   Copy,
   CheckCircle2,
   Trash2,
-  LogOut
+  LogOut,
+  Mic,
+  MicOff
 } from "lucide-react";
 import { 
   BarChart, 
@@ -99,6 +101,41 @@ export default function App() {
   const [loadingInsights, setLoadingInsights] = useState(false);
 
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [isListening, setIsListening] = useState(false);
+
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = language === Language.HI ? 'hi-IN' : 'en-IN';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setClientContext(prev => prev ? `${prev} ${transcript}` : transcript);
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
 
   // Auth listener
   useEffect(() => {
@@ -551,7 +588,21 @@ export default function App() {
 
                 <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm space-y-6 lg:space-y-8">
                   <div className="space-y-2 lg:space-y-3">
-                    <label className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold">{t.clientContext}</label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold">{t.clientContext}</label>
+                      <button 
+                        onClick={startListening}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border",
+                          isListening 
+                            ? "bg-red-50 border-red-200 text-red-500 animate-pulse" 
+                            : "bg-premium-bg border-premium-border text-[#8E8E8E] hover:text-premium-ink"
+                        )}
+                      >
+                        {isListening ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+                        {isListening ? "Listening..." : "Speak Input"}
+                      </button>
+                    </div>
                     <textarea 
                       placeholder={t.clientContextPlaceholder}
                       value={clientContext}
