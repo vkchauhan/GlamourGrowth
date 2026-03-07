@@ -205,6 +205,21 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
                       </button>
                     </div>
                   )}
+                  {error.includes("Billing not enabled") && (
+                    <div className="space-y-2">
+                      <p className="text-[10px] text-[#8E8E8E] leading-relaxed">
+                        Note: Phone Authentication requires a linked billing account in Firebase (Blaze Plan).
+                      </p>
+                      <a 
+                        href="https://console.firebase.google.com/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-premium-gold text-[10px] font-bold uppercase tracking-widest hover:underline"
+                      >
+                        Open Firebase Console
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
 
