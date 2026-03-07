@@ -71,5 +71,16 @@
   "sep": "Sep",
   "oct": "Oct",
   "nov": "Nov",
-  "dec": "Dec"
+  "dec": "Dec",
+  "login": "Login",
+  "phoneNumber": "Phone Number",
+  "sendOtp": "Send OTP",
+  "verifyOtp": "Verify OTP",
+  "enterOtp": "Enter OTP",
+  "otpSent": "OTP sent to your phone",
+  "invalidPhone": "Please enter a valid phone number",
+  "invalidOtp": "Invalid OTP. Please try again.",
+  "logout": "Logout",
+  "welcomeBack": "Welcome Back",
+  "loginSub": "Login to your account to manage your business."
 }

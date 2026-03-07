@@ -16,7 +16,8 @@ import {
   Loader2,
   Copy,
   CheckCircle2,
-  Trash2
+  Trash2,
+  LogOut
 } from "lucide-react";
 import { 
   BarChart, 
@@ -33,8 +34,11 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { AppTab, IncomeEntry, FESTIVALS, Language } from "./types";
 import { geminiService } from "./services/geminiService";
+import { auth } from "./services/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import en from "./locales/en.json";
 import hi from "./locales/hi.json";
+import Login from "./components/Login";
 
 const translations = {
   [Language.EN]: en,
@@ -46,6 +50,8 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export default function App() {
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.DASHBOARD);
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem("glamour_growth_lang");
@@ -93,6 +99,15 @@ export default function App() {
   const [loadingInsights, setLoadingInsights] = useState(false);
 
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  // Auth listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Load data from localStorage
   useEffect(() => {
@@ -156,6 +171,14 @@ export default function App() {
     setIncomeEntries(incomeEntries.filter(e => e.id !== id));
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Logout error", err);
+    }
+  };
+
   const generateStrategy = async () => {
     setLoadingStrategy(true);
     try {
@@ -199,6 +222,18 @@ export default function App() {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-premium-bg flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-premium-gold animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login language={language} onLoginSuccess={setUser} />;
+  }
+
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-premium-bg text-premium-ink font-sans overflow-hidden">
       {/* Mobile Header */}
@@ -226,6 +261,12 @@ export default function App() {
             <IndianRupee className="w-3 h-3 text-premium-gold" />
             <span className="text-xs font-bold">{totalIncome.toLocaleString('en-IN')}</span>
           </div>
+          <button 
+            onClick={handleLogout}
+            className="p-2 rounded-full bg-white border border-premium-border text-[#8E8E8E] hover:text-red-500 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
@@ -279,7 +320,7 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="p-8 border-t border-premium-border">
+        <div className="p-8 border-t border-premium-border space-y-4">
           <div className="bg-white p-6 rounded-3xl border border-premium-border shadow-sm">
             <p className="text-[10px] uppercase tracking-[0.15em] text-[#8E8E8E] font-bold mb-2">{t.totalRevenue}</p>
             <p className="text-2xl font-serif font-bold flex items-center gap-1">
@@ -287,6 +328,13 @@ export default function App() {
               {totalIncome.toLocaleString('en-IN')}
             </p>
           </div>
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all duration-300"
+          >
+            <LogOut className="w-4 h-4" />
+            {t.logout}
+          </button>
         </div>
       </aside>
 

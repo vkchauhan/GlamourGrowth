@@ -71,5 +71,16 @@
   "sep": "Sep",
   "oct": "Oct",
   "nov": "Nov",
-  "dec": "Dec"
+  "dec": "Dec",
+  "login": "Login",
+  "phoneNumber": "Phone Number",
+  "sendOtp": "OTP Bhejein",
+  "verifyOtp": "OTP Verify Karein",
+  "enterOtp": "OTP Enter Karein",
+  "otpSent": "Aapke phone par OTP bhej diya gaya hai",
+  "invalidPhone": "Kripya sahi phone number enter karein",
+  "invalidOtp": "Galat OTP. Kripya phir se try karein.",
+  "logout": "Logout",
+  "welcomeBack": "Welcome Back",
+  "loginSub": "Apna business manage karne ke liye login karein."
 }
