@@ -76,6 +76,15 @@ export default function App() {
     "Pre-Wedding Shoots": t.preWeddingShoots,
   };
 
+  const categoryTranslations: Record<string, string> = {
+    "Bridal": t.bridal,
+    "Party": t.party,
+    "Festival": t.festival,
+    "Pre-wedding": t.preWedding,
+    "Engagement": t.engagement,
+    "Editorial": t.editorial,
+  };
+
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [clientContext, setClientContext] = useState("");
@@ -111,7 +120,7 @@ export default function App() {
   [incomeEntries]);
 
   const chartData = useMemo(() => {
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const months = [t.jan, t.feb, t.mar, t.apr, t.may, t.jun, t.jul, t.aug, t.sep, t.oct, t.nov, t.dec];
     const data = months.map(m => ({ name: m, amount: 0 }));
     
     incomeEntries.forEach(entry => {
@@ -120,7 +129,7 @@ export default function App() {
     });
     
     return data;
-  }, [incomeEntries]);
+  }, [incomeEntries, t]);
 
   const handleAddIncome = () => {
     if (!newEntry.amount || !newEntry.clientName) return;
@@ -323,10 +332,13 @@ export default function App() {
                     <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.topCategory}</p>
                     <p className="text-3xl lg:text-5xl font-serif font-medium">
                       {incomeEntries.length ? 
-                        Object.entries(incomeEntries.reduce((acc, curr) => {
-                          acc[curr.category] = (acc[curr.category] || 0) + 1;
-                          return acc;
-                        }, {} as Record<string, number>)).sort((a, b) => b[1] - a[1])[0][0] 
+                        (() => {
+                          const topCat = Object.entries(incomeEntries.reduce((acc, curr) => {
+                            acc[curr.category] = (acc[curr.category] || 0) + 1;
+                            return acc;
+                          }, {} as Record<string, number>)).sort((a, b) => b[1] - a[1])[0][0];
+                          return categoryTranslations[topCat] || topCat;
+                        })()
                         : "N/A"}
                     </p>
                   </div>
@@ -371,7 +383,7 @@ export default function App() {
                             <div>
                               <p className="text-base lg:text-lg font-medium">{entry.clientName}</p>
                               <p className="text-[10px] lg:text-xs text-[#8E8E8E] flex items-center gap-2 lg:gap-3 mt-0.5 lg:mt-1">
-                                <span className="uppercase tracking-widest font-bold">{entry.category}</span>
+                                <span className="uppercase tracking-widest font-bold">{categoryTranslations[entry.category] || entry.category}</span>
                                 <span className="w-1 h-1 rounded-full bg-premium-gold" />
                                 <span className="italic">{new Date(entry.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
                               </p>
