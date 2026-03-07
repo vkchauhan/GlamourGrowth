@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   RecaptchaVerifier, 
   signInWithPhoneNumber, 
@@ -30,15 +30,48 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
   const [error, setError] = useState("");
   const [step, setStep] = useState<"phone" | "otp">("phone");
 
+  const recaptchaRef = useRef<any>(null);
+
   useEffect(() => {
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': () => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
+    const initRecaptcha = async () => {
+      try {
+        if (!recaptchaRef.current) {
+          const container = document.getElementById('recaptcha-container');
+          if (!container) {
+            console.error("reCAPTCHA container not found");
+            return;
+          }
+          
+          recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            'size': 'invisible',
+            'callback': () => {
+              // reCAPTCHA solved
+            },
+            'expired-callback': () => {
+              setError("reCAPTCHA expired. Please try again.");
+            }
+          });
+          
+          await recaptchaRef.current.render();
         }
-      });
-    }
+      } catch (err: any) {
+        console.error("reCAPTCHA init error:", err);
+        setError("Failed to initialize security check. Please check your internet connection or disable ad-blockers.");
+      }
+    };
+
+    initRecaptcha();
+
+    return () => {
+      if (recaptchaRef.current) {
+        try {
+          recaptchaRef.current.clear();
+        } catch (e) {
+          console.error("Error clearing reCAPTCHA:", e);
+        }
+        recaptchaRef.current = null;
+      }
+    };
   }, []);
 
   const handleSendOtp = async () => {
@@ -51,17 +84,40 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
     setError("");
     
     try {
-      const appVerifier = (window as any).recaptchaVerifier;
+      if (!recaptchaRef.current) {
+        throw new Error("Security check not initialized. Please refresh the page.");
+      }
+      
       const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, recaptchaRef.current);
       setConfirmationResult(confirmation);
       setStep("otp");
     } catch (err: any) {
       console.error("Error sending OTP", err);
-      setError(err.message || "Failed to send OTP");
-      if ((window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier.clear();
-        (window as any).recaptchaVerifier = null;
+      
+      let errorMessage = err.message || "Failed to send OTP. Please check your network.";
+      if (err.code === 'auth/network-request-failed' || errorMessage.includes('network')) {
+        errorMessage = "Network error: Please check your internet connection or disable ad-blockers/VPNs that might be blocking Google services.";
+      }
+      
+      setError(errorMessage);
+      
+      // Reset reCAPTCHA on error
+      if (recaptchaRef.current) {
+        try {
+          recaptchaRef.current.clear();
+          recaptchaRef.current = null;
+          // Trigger re-init
+          const container = document.getElementById('recaptcha-container');
+          if (container) {
+            recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+              'size': 'invisible'
+            });
+            await recaptchaRef.current.render();
+          }
+        } catch (e) {
+          console.error("Error resetting reCAPTCHA:", e);
+        }
       }
     } finally {
       setLoading(false);
@@ -130,7 +186,24 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
                 </div>
               </div>
 
-              {error && <p className="text-red-500 text-sm font-medium italic">{error}</p>}
+              {error && (
+                <div className="space-y-2">
+                  <p className="text-red-500 text-sm font-medium italic">{error}</p>
+                  {(error.includes("security") || error.includes("Network")) && (
+                    <div className="space-y-2">
+                      <p className="text-[10px] text-[#8E8E8E] leading-relaxed">
+                        Tip: Try disabling ad-blockers or checking your VPN/Firewall settings.
+                      </p>
+                      <button 
+                        onClick={() => window.location.reload()}
+                        className="text-premium-gold text-[10px] font-bold uppercase tracking-widest hover:underline"
+                      >
+                        Refresh Page
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <button 
                 onClick={handleSendOtp}
@@ -165,7 +238,25 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
                 <p className="text-[10px] text-[#8E8E8E] italic">{t.otpSent}</p>
               </div>
 
-              {error && <p className="text-red-500 text-sm font-medium italic">{error}</p>}
+              {error && (
+                <div className="space-y-2">
+                  <p className="text-red-500 text-sm font-medium italic">{error}</p>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => setStep("phone")}
+                      className="text-[10px] text-premium-gold uppercase tracking-widest hover:underline"
+                    >
+                      Try another number
+                    </button>
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="text-[10px] text-[#8E8E8E] uppercase tracking-widest hover:underline"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <button 
                 onClick={handleVerifyOtp}
