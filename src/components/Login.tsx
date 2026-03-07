@@ -96,7 +96,10 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
       console.error("Error sending OTP", err);
       
       let errorMessage = err.message || "Failed to send OTP. Please check your network.";
-      if (err.code === 'auth/network-request-failed' || errorMessage.includes('network')) {
+      
+      if (err.code === 'auth/billing-not-enabled') {
+        errorMessage = "Billing not enabled: Please go to Firebase Console and link a billing account (Blaze Plan) to use Phone Authentication.";
+      } else if (err.code === 'auth/network-request-failed' || errorMessage.includes('network')) {
         errorMessage = "Network error: Please check your internet connection or disable ad-blockers/VPNs that might be blocking Google services.";
       }
       
