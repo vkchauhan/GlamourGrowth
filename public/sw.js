@@ -39,6 +39,11 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Skip non-http/https requests (e.g., chrome-extension://)
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
   // Strategy: Stale-While-Revalidate for static assets
   if (ASSETS_TO_CACHE.includes(url.pathname) || request.destination === 'image' || request.destination === 'font') {
     event.respondWith(
