@@ -90,8 +90,8 @@ export class GeminiService {
           source_processing: "img2img",
           params: {
             denoising_strength: 0.4,
-            width: 768,
-            height: 768,
+            width: 512,
+            height: 512,
             steps: 20,
             n: 3
           },
