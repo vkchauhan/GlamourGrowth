@@ -19,7 +19,9 @@ import {
   Trash2,
   LogOut,
   Mic,
-  MicOff
+  MicOff,
+  Bell,
+  WifiOff
 } from "lucide-react";
 import { 
   BarChart, 
@@ -38,6 +40,7 @@ import { AppTab, IncomeEntry, FESTIVALS, Language } from "./types";
 import { geminiService } from "./services/geminiService";
 import { auth } from "./services/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { pwaService } from "./services/pwaService";
 import en from "./locales/en.json";
 import hi from "./locales/hi.json";
 import Login from "./components/Login";
@@ -102,6 +105,31 @@ export default function App() {
 
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    'Notification' in window ? Notification.permission : 'default'
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    const granted = await pwaService.requestNotificationPermission();
+    if (granted) {
+      setNotificationPermission('granted');
+      pwaService.showLocalNotification(t.appTitle, t.notificationsEnabled);
+    }
+  };
 
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -196,6 +224,12 @@ export default function App() {
     
     setIncomeEntries([entry, ...incomeEntries]);
     setIsAddingIncome(false);
+    
+    // Background Sync registration
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+      pwaService.registerBackgroundSync('sync-leads');
+    }
+
     setNewEntry({
       date: new Date().toISOString().split('T')[0],
       category: "Bridal",
@@ -304,6 +338,11 @@ export default function App() {
           >
             <LogOut className="w-4 h-4" />
           </button>
+          {!isOnline && (
+            <div className="p-2 rounded-full bg-amber-50 border border-amber-200 text-amber-600">
+              <WifiOff className="w-4 h-4" />
+            </div>
+          )}
         </div>
       </header>
 
@@ -372,6 +411,23 @@ export default function App() {
             <LogOut className="w-4 h-4" />
             {t.logout}
           </button>
+
+          {notificationPermission !== 'granted' && (
+            <button 
+              onClick={handleEnableNotifications}
+              className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-medium text-premium-gold hover:bg-premium-gold/5 transition-all duration-300 border border-premium-gold/20"
+            >
+              <Bell className="w-4 h-4" />
+              {t.enableNotifications}
+            </button>
+          )}
+
+          {!isOnline && (
+            <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-amber-50 text-amber-600 text-xs font-bold border border-amber-100">
+              <WifiOff className="w-4 h-4" />
+              {t.offlineMode}
+            </div>
+          )}
         </div>
       </aside>
 

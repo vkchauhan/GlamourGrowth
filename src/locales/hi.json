@@ -82,5 +82,9 @@
   "invalidOtp": "Galat OTP. Kripya phir se try karein.",
   "logout": "Logout",
   "welcomeBack": "Welcome Back",
-  "loginSub": "Apna business manage karne ke liye login karein."
+  "loginSub": "Apna business manage karne ke liye login karein.",
+  "enableNotifications": "Notifications On Karein",
+  "notificationsEnabled": "Notifications On Hain",
+  "offlineMode": "Offline Mode Active Hai",
+  "syncingData": "Background mein data sync ho raha hai..."
 }

@@ -82,5 +82,9 @@
   "invalidOtp": "Invalid OTP. Please try again.",
   "logout": "Logout",
   "welcomeBack": "Welcome Back",
-  "loginSub": "Login to your account to manage your business."
+  "loginSub": "Login to your account to manage your business.",
+  "enableNotifications": "Enable Notifications",
+  "notificationsEnabled": "Notifications Enabled",
+  "offlineMode": "Offline Mode Active",
+  "syncingData": "Syncing data in background..."
 }
