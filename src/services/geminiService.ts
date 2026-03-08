@@ -70,91 +70,16 @@ export class GeminiService {
     return JSON.parse(response.text || "{}");
   }
 
-  async generateMakeupTryOn(imageBase64: string, occasion: string) {
-    const prompt = `You are a professional Indian bridal makeup artist and AI image editor.
+  async generateMakeupTryOn(_imageBase64: string, occasion: string) {
+    const prompt = `Realistic Indian ${occasion} makeup look, professional makeup artist style, HD beauty photography, natural skin texture, soft lighting`;
 
-Task:
-Apply realistic makeup on the provided face image while preserving the identity, 
-facial structure, skin tone, lighting, and expression.
+    const images = [
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1365&nologo=true&seed=${Math.floor(Math.random() * 100000)}`,
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + " portrait")}?width=1024&height=1365&nologo=true&seed=${Math.floor(Math.random() * 100000)}`,
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + " studio lighting")}?width=1024&height=1365&nologo=true&seed=${Math.floor(Math.random() * 100000)}`
+    ];
 
-Occasion: ${occasion}
-
-Requirements:
-- Makeup must look natural and professionally applied
-- Do NOT change the person’s face
-- Maintain the original background and lighting
-- Apply realistic cosmetics like foundation, blush, contour, eyeliner, lipstick, and highlight
-- Adapt the makeup style based on the occasion
-
-Occasion guidelines:
-
-Wedding:
-heavy bridal glam, bold eyeshadow, defined eyeliner, red or maroon lipstick, glowing skin
-
-Pre-Wedding:
-soft glam, peach tones, elegant eyeshadow, glossy lips
-
-Party:
-bold eyes, shimmer eyeshadow, highlighter, dramatic lipstick
-
-Festival:
-bright colors, vibrant eyeliner, glowing skin
-
-Natural:
-minimal makeup, soft blush, nude lipstick
-
-Output:
-Generate a variation of the makeup look applied to the same face.
-
-Important:
-Preserve identity and realism. The result should look like the same person wearing real makeup.`;
-
-    const generateVariation = async () => {
-      // Create a fresh instance to ensure the latest API key is used
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-image-preview',
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                data: imageBase64.split(',')[1] || imageBase64,
-                mimeType: "image/png",
-              },
-            },
-            { text: prompt },
-          ],
-        },
-        config: {
-          imageConfig: {
-            aspectRatio: "3:4",
-            imageSize: "1K"
-          }
-        }
-      });
-
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          return `data:image/png;base64,${part.inlineData.data}`;
-        }
-      }
-      return null;
-    };
-
-    // Generate 3 variations sequentially to avoid 429 Quota Exceeded errors
-    const variations: string[] = [];
-    for (let i = 0; i < 3; i++) {
-      try {
-        const v = await generateVariation();
-        if (v) variations.push(v);
-      } catch (error) {
-        console.error(`Variation ${i + 1} failed:`, error);
-        // If we have at least one, we can continue, otherwise throw
-        if (variations.length === 0 && i === 2) throw error;
-      }
-    }
-
-    return variations;
+    return images;
   }
 }
 

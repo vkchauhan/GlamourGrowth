@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { 
   Camera, 
   Upload, 
@@ -20,15 +20,6 @@ const translations = {
   [Language.EN]: en,
   [Language.HI]: hi,
 };
-
-declare global {
-  interface Window {
-    aistudio?: {
-      hasSelectedApiKey: () => Promise<boolean>;
-      openSelectKey: () => Promise<void>;
-    };
-  }
-}
 
 interface VirtualTryOnProps {
   language: Language;
@@ -52,26 +43,8 @@ export default function VirtualTryOn({ language }: VirtualTryOnProps) {
   const [loading, setLoading] = useState(false);
   const [compareIndex, setCompareIndex] = useState<number | null>(null);
   const [sliderPos, setSliderPos] = useState(50);
-  const [hasKey, setHasKey] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const checkKey = async () => {
-      if (window.aistudio?.hasSelectedApiKey) {
-        const selected = await window.aistudio.hasSelectedApiKey();
-        setHasKey(selected);
-      }
-    };
-    checkKey();
-  }, []);
-
-  const handleConnectKey = async () => {
-    if (window.aistudio?.openSelectKey) {
-      await window.aistudio.openSelectKey();
-      setHasKey(true);
-    }
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -91,22 +64,13 @@ export default function VirtualTryOn({ language }: VirtualTryOnProps) {
 
   const handleGenerate = async () => {
     if (!originalImage) return;
-    if (!hasKey) {
-      await handleConnectKey();
-    }
     setLoading(true);
     try {
       const variations = await geminiService.generateMakeupTryOn(originalImage, occasion);
       setResults(variations);
     } catch (error: any) {
       console.error("Generation failed", error);
-      const errorMsg = error.message || "";
-      if (errorMsg.includes("429") || errorMsg.includes("quota") || errorMsg.includes("Requested entity was not found")) {
-        alert("Quota exceeded or API key issue. Please re-select your API key.");
-        setHasKey(false);
-      } else {
-        alert("Failed to generate makeup looks. Please try again.");
-      }
+      alert("Failed to generate makeup looks. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -202,21 +166,6 @@ export default function VirtualTryOn({ language }: VirtualTryOnProps) {
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 text-premium-gold" />}
                   {t.generateMakeupLooks}
                 </button>
-
-                {!hasKey && (
-                  <div className="p-4 rounded-xl bg-premium-bg border border-premium-border space-y-3">
-                    <p className="text-[10px] text-[#8E8E8E] leading-relaxed">
-                      Image generation requires a paid Gemini API key. Please connect your key to continue. 
-                      <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-premium-gold ml-1 underline">Learn about billing</a>
-                    </p>
-                    <button 
-                      onClick={handleConnectKey}
-                      className="w-full py-2 rounded-lg border border-premium-gold text-premium-gold text-xs font-bold hover:bg-premium-gold hover:text-white transition-all"
-                    >
-                      Connect API Key
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </div>
