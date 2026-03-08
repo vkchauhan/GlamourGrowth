@@ -143,8 +143,22 @@ export class GeminiService {
     
     const negativePrompt = "blurry, cartoon, anime, unrealistic skin, plastic skin, oversmoothed skin, distorted face, bad anatomy, extra eyes, extra nose, extra lips, mutated face, duplicate face, low resolution, noisy image, washed out colors";
 
+    const getClothingDescription = (occ: string) => {
+      const lowerOcc = occ.toLowerCase();
+      if (lowerOcc.includes('wedding') || lowerOcc.includes('bridal')) {
+        return "wearing a heavy red Indian bridal lehenga with intricate gold embroidery, traditional heavy bridal jewelry, maang tikka, nath, royal bridal attire";
+      } else if (lowerOcc.includes('party')) {
+        return "wearing a stylish designer Indian party wear saree or lehenga, elegant modern jewelry, fashionable ethnic attire";
+      } else if (lowerOcc.includes('pre-wedding')) {
+        return "wearing a graceful pastel Indian ethnic gown or lehenga, simple elegant jewelry, romantic pre-wedding attire";
+      }
+      return "wearing traditional Indian ethnic attire";
+    };
+
+    const clothingDesc = getClothingDescription(occasion);
+
     const getPrompt = (style: string) => 
-      `Apply realistic Indian ${occasion} makeup on the provided face image, ${style}, professional Indian makeup artist style, preserve original face identity, ${realismModifiers}`;
+      `Apply realistic Indian ${occasion} makeup on the provided face image, ${style}, ${clothingDesc}, professional Indian makeup artist style, preserve original face identity, ${realismModifiers}`;
 
     const variations = [
       "Natural Glam: Soft foundation, natural lipstick, light eyeshadow",
@@ -175,7 +189,7 @@ export class GeminiService {
             source_image: base64Data,
             source_processing: "img2img",
             params: {
-              denoising_strength: 0.4,
+              denoising_strength: 0.45,
               width: 512,
               height: 512,
               steps: 20,
@@ -225,7 +239,7 @@ export class GeminiService {
     } catch (error) {
       console.warn("AI Horde SDXL pipeline failed, falling back to Pollinations:", error);
 
-      const pollinationsPrompt = `Realistic Indian ${occasion} makeup look, professional makeup artist style, HD beauty photography, natural skin texture, soft lighting`;
+      const pollinationsPrompt = `Realistic Indian ${occasion} makeup look, ${clothingDesc}, professional makeup artist style, HD beauty photography, natural skin texture, soft lighting`;
       const pollinationsBase = `https://image.pollinations.ai/prompt/${encodeURIComponent(pollinationsPrompt)}`;
 
       return [
