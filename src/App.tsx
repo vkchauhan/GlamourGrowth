@@ -487,24 +487,26 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[48px] border border-premium-border shadow-sm h-[350px] lg:h-[450px]">
+                <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[48px] border border-premium-border shadow-sm h-[350px] lg:h-[450px] flex flex-col">
                   <h3 className="text-lg lg:text-xl font-serif font-bold mb-6 lg:mb-8 italic">{t.revenueTrend}</h3>
-                  <ResponsiveContainer width="100%" height="80%">
-                    <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0F0F0" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#8E8E8E', fontWeight: 500 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#8E8E8E', fontWeight: 500 }} />
-                      <Tooltip 
-                        cursor={{ fill: '#F9F7F2' }}
-                        contentStyle={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 10px 20px rgba(0,0,0,0.08)', padding: '12px' }}
-                      />
-                      <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.amount > 0 ? '#1A1A1A' : '#F0F0F0'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <div className="flex-1 min-h-0 w-full">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0F0F0" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#8E8E8E', fontWeight: 500 }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#8E8E8E', fontWeight: 500 }} />
+                        <Tooltip 
+                          cursor={{ fill: '#F9F7F2' }}
+                          contentStyle={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 10px 20px rgba(0,0,0,0.08)', padding: '12px' }}
+                        />
+                        <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
+                          {chartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.amount > 0 ? '#1A1A1A' : '#F0F0F0'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
 
                 <div className="bg-white rounded-[32px] lg:rounded-[48px] border border-premium-border shadow-sm overflow-hidden">
