@@ -70,77 +70,73 @@ export class GeminiService {
     return JSON.parse(response.text || "{}");
   }
 
-  async generateMakeupTryOn(_imageBase64: string, occasion: string) {
-    const prompt = `Realistic Indian ${occasion} makeup look, professional makeup artist style, HD beauty photography, natural skin texture, soft lighting`;
-    const pollinationsBase = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+  async generateMakeupTryOn(imageBase64: string, occasion: string) {
+    const base64Data = imageBase64.split(',')[1] || imageBase64;
+    const prompt = `Apply realistic Indian ${occasion} makeup on the provided face image, professional makeup artist style, natural skin texture, soft lighting, beauty photography. Preserve the facial identity and structure exactly, only modify the makeup.`;
 
     try {
-      // Attempt image generation using Pollinations AI (Primary)
-      // We fetch the first one to verify availability
-      const response = await fetch(`${pollinationsBase}?width=1024&height=1365&nologo=true&seed=${Math.floor(Math.random() * 100000)}`);
+      // Primary: AI Horde for true img2img (identity preservation)
+      // We use AI Horde as primary for this specific feature because it supports source_image and denoising_strength
+      const hordeResponse = await fetch("https://aihorde.net/api/v2/generate/async", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": "0000000000"
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          source_image: base64Data,
+          params: {
+            workflow: "img2img",
+            denoising_strength: 0.4,
+            width: 1024,
+            height: 1024,
+            steps: 25,
+            n: 3
+          }
+        })
+      });
 
-      if (!response.ok) {
-        throw new Error("Pollinations failed");
+      if (!hordeResponse.ok) {
+        throw new Error("AI Horde request failed");
       }
+
+      const { id } = await hordeResponse.json();
+      
+      // Polling for completion
+      let attempts = 0;
+      const maxAttempts = 45; // 90 seconds max
+      
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const statusRes = await fetch(`https://aihorde.net/api/v2/generate/status/${id}`);
+        
+        if (!statusRes.ok) throw new Error("Failed to check AI Horde status");
+        
+        const statusData = await statusRes.json();
+        if (statusData.done && statusData.generations) {
+          return statusData.generations.map((g: any) => g.img);
+        }
+        
+        if (statusData.faulted) throw new Error("AI Horde generation faulted");
+        
+        attempts++;
+      }
+      
+      throw new Error("AI Horde generation timed out");
+    } catch (error) {
+      console.warn("AI Horde img2img failed, falling back to Pollinations (random face):", error);
+
+      // Fallback: Pollinations AI (Text-to-Image, random face)
+      // This ensures the user still gets results even if identity preservation fails
+      const pollinationsPrompt = `Realistic Indian ${occasion} makeup look, professional makeup artist style, HD beauty photography, natural skin texture, soft lighting`;
+      const pollinationsBase = `https://image.pollinations.ai/prompt/${encodeURIComponent(pollinationsPrompt)}`;
 
       return [
         `${pollinationsBase}?width=1024&height=1365&nologo=true&seed=${Math.floor(Math.random() * 100000)}`,
         `${pollinationsBase}%20portrait?width=1024&height=1365&nologo=true&seed=${Math.floor(Math.random() * 100000)}`,
         `${pollinationsBase}%20studio%20lighting?width=1024&height=1365&nologo=true&seed=${Math.floor(Math.random() * 100000)}`
       ];
-    } catch (error) {
-      console.warn("Pollinations AI failed, falling back to AI Horde:", error);
-
-      // Fallback to AI Horde Stable Diffusion
-      try {
-        const hordeResponse = await fetch("https://aihorde.net/api/v2/generate/async", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": "0000000000"
-          },
-          body: JSON.stringify({
-            prompt: prompt,
-            params: {
-              width: 768,
-              height: 1024,
-              steps: 25,
-              n: 3
-            }
-          })
-        });
-
-        if (!hordeResponse.ok) {
-          throw new Error("AI Horde request failed");
-        }
-
-        const { id } = await hordeResponse.json();
-        
-        // Polling for completion
-        let attempts = 0;
-        const maxAttempts = 30; // 60 seconds max
-        
-        while (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          const statusRes = await fetch(`https://aihorde.net/api/v2/generate/status/${id}`);
-          
-          if (!statusRes.ok) throw new Error("Failed to check AI Horde status");
-          
-          const statusData = await statusRes.json();
-          if (statusData.done && statusData.generations) {
-            return statusData.generations.map((g: any) => g.img);
-          }
-          
-          if (statusData.faulted) throw new Error("AI Horde generation faulted");
-          
-          attempts++;
-        }
-        
-        throw new Error("AI Horde generation timed out");
-      } catch (hordeError) {
-        console.error("AI Horde fallback also failed:", hordeError);
-        throw new Error("All image generation services are currently unavailable.");
-      }
     }
   }
 }
