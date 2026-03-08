@@ -44,6 +44,7 @@ import { pwaService } from "./services/pwaService";
 import en from "./locales/en.json";
 import hi from "./locales/hi.json";
 import Login from "./components/Login";
+import VirtualTryOn from "./components/VirtualTryOn";
 
 const translations = {
   [Language.EN]: en,
@@ -379,6 +380,7 @@ export default function App() {
             { id: AppTab.STRATEGY, label: t.festivalStrategy, icon: Calendar },
             { id: AppTab.MESSAGES, label: t.smartMessages, icon: MessageSquareText },
             { id: AppTab.INSIGHTS, label: t.growthInsights, icon: TrendingUp },
+            { id: AppTab.TRY_ON, label: t.virtualTryOn, icon: Sparkles },
           ].map((item) => (
             <button
               key={item.id}
@@ -769,6 +771,18 @@ export default function App() {
                 )}
               </motion.div>
             )}
+
+            {activeTab === AppTab.TRY_ON && (
+              <motion.div
+                key="try-on"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-8 lg:space-y-12"
+              >
+                <VirtualTryOn language={language} />
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </main>
@@ -780,6 +794,7 @@ export default function App() {
           { id: AppTab.STRATEGY, icon: Calendar, label: t.strategy },
           { id: AppTab.MESSAGES, icon: MessageSquareText, label: t.messages },
           { id: AppTab.INSIGHTS, icon: TrendingUp, label: t.insights },
+          { id: AppTab.TRY_ON, icon: Sparkles, label: t.tryOn },
         ].map((item) => (
           <button
             key={item.id}

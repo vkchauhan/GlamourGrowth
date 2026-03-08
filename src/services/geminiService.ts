@@ -69,6 +69,77 @@ export class GeminiService {
 
     return JSON.parse(response.text || "{}");
   }
+
+  async generateMakeupTryOn(imageBase64: string, occasion: string) {
+    const prompt = `You are a professional Indian bridal makeup artist and AI image editor.
+
+Task:
+Apply realistic makeup on the provided face image while preserving the identity, 
+facial structure, skin tone, lighting, and expression.
+
+Occasion: ${occasion}
+
+Requirements:
+- Makeup must look natural and professionally applied
+- Do NOT change the person’s face
+- Maintain the original background and lighting
+- Apply realistic cosmetics like foundation, blush, contour, eyeliner, lipstick, and highlight
+- Adapt the makeup style based on the occasion
+
+Occasion guidelines:
+
+Wedding:
+heavy bridal glam, bold eyeshadow, defined eyeliner, red or maroon lipstick, glowing skin
+
+Pre-Wedding:
+soft glam, peach tones, elegant eyeshadow, glossy lips
+
+Party:
+bold eyes, shimmer eyeshadow, highlighter, dramatic lipstick
+
+Festival:
+bright colors, vibrant eyeliner, glowing skin
+
+Natural:
+minimal makeup, soft blush, nude lipstick
+
+Output:
+Generate a variation of the makeup look applied to the same face.
+
+Important:
+Preserve identity and realism. The result should look like the same person wearing real makeup.`;
+
+    const generateVariation = async () => {
+      const response = await this.ai.models.generateContent({
+        model: "gemini-2.5-flash-image",
+        contents: [
+          {
+            inlineData: {
+              data: imageBase64.split(',')[1] || imageBase64,
+              mimeType: "image/png",
+            },
+          },
+          { text: prompt },
+        ],
+      });
+
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) {
+          return `data:image/png;base64,${part.inlineData.data}`;
+        }
+      }
+      return null;
+    };
+
+    // Generate 3 variations in parallel
+    const variations = await Promise.all([
+      generateVariation(),
+      generateVariation(),
+      generateVariation(),
+    ]);
+
+    return variations.filter(v => v !== null) as string[];
+  }
 }
 
 export const geminiService = new GeminiService();

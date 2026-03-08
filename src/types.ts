@@ -10,6 +10,7 @@ export enum AppTab {
   STRATEGY = "strategy",
   MESSAGES = "messages",
   INSIGHTS = "insights",
+  TRY_ON = "try_on",
 }
 
 export enum Language {
