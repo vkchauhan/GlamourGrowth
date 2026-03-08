@@ -3,6 +3,7 @@
   "name": "Glamour Growth",
   "short_name": "GlamourGrowth",
   "description": "Business growth assistant for Indian freelance makeup artists.",
+  "categories": ["business", "productivity", "growth", "freelance", "India", "artist", "makeup"],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

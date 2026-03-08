@@ -302,7 +302,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <Login language={language} onLoginSuccess={setUser} />;
+    return <Login language={language} setLanguage={setLanguage} onLoginSuccess={setUser} />;
   }
 
   return (

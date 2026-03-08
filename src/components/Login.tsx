@@ -18,10 +18,11 @@ const translations = {
 
 interface LoginProps {
   language: Language;
+  setLanguage: (lang: Language) => void;
   onLoginSuccess: (user: any) => void;
 }
 
-export default function Login({ language, onLoginSuccess }: LoginProps) {
+export default function Login({ language, setLanguage, onLoginSuccess }: LoginProps) {
   const t = translations[language];
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
@@ -155,6 +156,22 @@ export default function Login({ language, onLoginSuccess }: LoginProps) {
         className="w-full max-w-md bg-white rounded-[48px] p-8 lg:p-12 shadow-2xl border border-premium-border"
       >
         <div className="text-center space-y-4 mb-10">
+          <div className="flex justify-center mb-6">
+            <div className="flex bg-premium-bg border border-premium-border rounded-full p-1 w-fit">
+              <button 
+                onClick={() => setLanguage(Language.EN)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${language === Language.EN ? "bg-premium-ink text-white shadow-lg" : "text-[#8E8E8E]"}`}
+              >
+                English
+              </button>
+              <button 
+                onClick={() => setLanguage(Language.HI)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${language === Language.HI ? "bg-premium-ink text-white shadow-lg" : "text-[#8E8E8E]"}`}
+              >
+                Hinglish
+              </button>
+            </div>
+          </div>
           <div className="w-16 h-16 bg-premium-ink rounded-2xl mx-auto flex items-center justify-center shadow-xl shadow-black/10">
             <Sparkles className="w-8 h-8 text-premium-gold" />
           </div>
