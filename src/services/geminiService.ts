@@ -174,18 +174,15 @@ export class GeminiService {
             negative_prompt: negativePrompt,
             source_image: base64Data,
             source_processing: "img2img",
-            // If face crop is available, we can try to use it as a control image or similar
-            // though AI Horde support for multi-image is limited in simple async calls.
-            // We'll stick to the requested parameters.
             params: {
               denoising_strength: 0.4,
-              width: 1024,
-              height: 1024,
-              steps: 25,
+              width: 512,
+              height: 512,
+              steps: 20,
               cfg_scale: 7,
               n: 1
             },
-            models: ["SDXL_1.0"]
+            models: ["stable_diffusion"]
           })
         });
 
@@ -193,17 +190,30 @@ export class GeminiService {
           const { id } = await hordeResponse.json();
           
           let attempts = 0;
-          const maxAttempts = 45;
+          const maxAttempts = 30; // 60 seconds total
           while (attempts < maxAttempts) {
             await new Promise(resolve => setTimeout(resolve, 2000));
-            const statusRes = await fetch(`https://aihorde.net/api/v2/generate/status/${id}`);
-            if (statusRes.ok) {
-              const statusData = await statusRes.json();
-              if (statusData.done && statusData.generations) {
-                results.push(statusData.generations[0].img);
-                break;
+            
+            // Step 1: Check generation status
+            const checkRes = await fetch(`https://aihorde.net/api/v2/generate/check/${id}`);
+            if (!checkRes.ok) continue;
+            
+            const checkData = await checkRes.json();
+            
+            // Step 2: If done, retrieve results
+            if (checkData.done) {
+              const statusRes = await fetch(`https://aihorde.net/api/v2/generate/status/${id}`);
+              if (statusRes.ok) {
+                const statusData = await statusRes.json();
+                if (statusData.generations && statusData.generations.length > 0) {
+                  results.push(statusData.generations[0].img);
+                  break;
+                }
               }
             }
+            
+            if (checkData.faulted) break;
+            
             attempts++;
           }
         }
