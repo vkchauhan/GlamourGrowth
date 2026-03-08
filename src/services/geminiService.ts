@@ -81,24 +81,27 @@ export class GeminiService {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": "0000000000"
+          "apikey": "0000000000",
+          "Client-Agent": "GlamourGrowth:1.0:v.chauhan144@gmail.com"
         },
         body: JSON.stringify({
           prompt: prompt,
           source_image: base64Data,
+          source_processing: "img2img",
           params: {
-            workflow: "img2img",
             denoising_strength: 0.4,
             width: 1024,
             height: 1024,
-            steps: 25,
+            steps: 20,
             n: 3
-          }
+          },
+          models: ["stable_diffusion"]
         })
       });
 
       if (!hordeResponse.ok) {
-        throw new Error("AI Horde request failed");
+        const errorText = await hordeResponse.text();
+        throw new Error(`AI Horde request failed: ${hordeResponse.status} - ${errorText}`);
       }
 
       const { id } = await hordeResponse.json();
