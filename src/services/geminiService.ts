@@ -110,17 +110,27 @@ Important:
 Preserve identity and realism. The result should look like the same person wearing real makeup.`;
 
     const generateVariation = async () => {
-      const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-flash-image",
-        contents: [
-          {
-            inlineData: {
-              data: imageBase64.split(',')[1] || imageBase64,
-              mimeType: "image/png",
+      // Create a fresh instance to ensure the latest API key is used
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-image-preview',
+        contents: {
+          parts: [
+            {
+              inlineData: {
+                data: imageBase64.split(',')[1] || imageBase64,
+                mimeType: "image/png",
+              },
             },
-          },
-          { text: prompt },
-        ],
+            { text: prompt },
+          ],
+        },
+        config: {
+          imageConfig: {
+            aspectRatio: "3:4",
+            imageSize: "1K"
+          }
+        }
       });
 
       for (const part of response.candidates?.[0]?.content?.parts || []) {
@@ -131,14 +141,20 @@ Preserve identity and realism. The result should look like the same person weari
       return null;
     };
 
-    // Generate 3 variations in parallel
-    const variations = await Promise.all([
-      generateVariation(),
-      generateVariation(),
-      generateVariation(),
-    ]);
+    // Generate 3 variations sequentially to avoid 429 Quota Exceeded errors
+    const variations: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      try {
+        const v = await generateVariation();
+        if (v) variations.push(v);
+      } catch (error) {
+        console.error(`Variation ${i + 1} failed:`, error);
+        // If we have at least one, we can continue, otherwise throw
+        if (variations.length === 0 && i === 2) throw error;
+      }
+    }
 
-    return variations.filter(v => v !== null) as string[];
+    return variations;
   }
 }
 
