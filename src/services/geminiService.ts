@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GoogleGenAI, Type } from "@google/genai";
 import * as faceDetection from '@tensorflow-models/face-detection';
 import '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
@@ -25,12 +24,7 @@ Always produce valid, parsable JSON. Keep responses concise but strategic.`;
 };
 
 export class GeminiService {
-  private ai: GoogleGenAI;
   private detector: faceDetection.FaceDetector | null = null;
-
-  constructor() {
-    this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-  }
 
   private async initDetector() {
     if (this.detector) return this.detector;
@@ -91,76 +85,56 @@ export class GeminiService {
     }
   }
 
-  private async withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
-    let lastError: any;
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        return await fn();
-      } catch (error: any) {
-        lastError = error;
-        // Check if it's a 503 error (Service Unavailable / High Demand)
-        const isRetryable = error?.message?.includes('503') || 
-                          error?.message?.includes('high demand') ||
-                          error?.status === 503 ||
-                          error?.code === 503;
-        
-        if (isRetryable && i < maxRetries - 1) {
-          const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-          console.warn(`Gemini API busy (503). Retrying in ${Math.round(delay)}ms... (Attempt ${i + 1}/${maxRetries})`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
-        }
-        throw error;
-      }
+  private async callAiGateway(params: {
+    contentType: string;
+    city?: string;
+    prompt: string;
+    metadata?: any;
+    imageBase64?: string;
+    schema?: any;
+  }) {
+    const response = await fetch("/api/ai-generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "AI Gateway request failed");
     }
-    throw lastError;
+
+    const result = await response.json();
+    return result.data;
   }
 
   async generateFestivalStrategy(festival: string, currentIncome: number, language: Language = Language.EN) {
-    return this.withRetry(async () => {
-      const response = await this.ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Generate a revenue strategy for ${festival}. My current monthly income is ₹${currentIncome}.`,
-        config: {
-          systemInstruction: getSystemInstruction(language),
-          responseMimeType: "application/json",
-          responseSchema: STRATEGY_SCHEMA as any,
-        },
-      });
-
-      return JSON.parse(response.text || "{}");
+    return this.callAiGateway({
+      contentType: "strategy",
+      city: "india",
+      prompt: `Generate a revenue strategy for ${festival}. My current monthly income is ₹${currentIncome}.`,
+      metadata: { systemInstruction: getSystemInstruction(language) },
+      schema: STRATEGY_SCHEMA
     });
   }
 
   async generateFollowUpMessages(clientContext: string, language: Language = Language.EN) {
-    return this.withRetry(async () => {
-      const response = await this.ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Generate 3 smart follow-up messages for this client context: ${clientContext}. Focus on conversion and Indian pricing psychology.`,
-        config: {
-          systemInstruction: getSystemInstruction(language),
-          responseMimeType: "application/json",
-          responseSchema: MESSAGE_SCHEMA as any,
-        },
-      });
-
-      return JSON.parse(response.text || "{}");
+    return this.callAiGateway({
+      contentType: "messages",
+      city: "india",
+      prompt: `Generate 3 smart follow-up messages for this client context: ${clientContext}. Focus on conversion and Indian pricing psychology.`,
+      metadata: { systemInstruction: getSystemInstruction(language) },
+      schema: MESSAGE_SCHEMA
     });
   }
 
   async generateBusinessInsights(incomeData: any[], language: Language = Language.EN) {
-    return this.withRetry(async () => {
-      const response = await this.ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Analyze this income data and provide growth insights: ${JSON.stringify(incomeData)}. Focus on Indian market trends and revenue maximization.`,
-        config: {
-          systemInstruction: getSystemInstruction(language),
-          responseMimeType: "application/json",
-          responseSchema: INSIGHTS_SCHEMA as any,
-        },
-      });
-
-      return JSON.parse(response.text || "{}");
+    return this.callAiGateway({
+      contentType: "insights",
+      city: "india",
+      prompt: `Analyze this income data and provide growth insights: ${JSON.stringify(incomeData)}. Focus on Indian market trends and revenue maximization.`,
+      metadata: { systemInstruction: getSystemInstruction(language) },
+      schema: INSIGHTS_SCHEMA
     });
   }
 
@@ -284,20 +258,10 @@ export class GeminiService {
   async generateInstagramPost(imageBase64: string, contentType: string, language: Language = Language.EN) {
     const base64Data = imageBase64.split(',')[1] || imageBase64;
 
-    return this.withRetry(async () => {
-      const response = await this.ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [
-          {
-            parts: [
-              {
-                inlineData: {
-                  data: base64Data,
-                  mimeType: "image/jpeg",
-                },
-              },
-              {
-                text: `You are a professional social media manager for freelance makeup artists in India.
+    return this.callAiGateway({
+      contentType: "instagram",
+      city: "india",
+      prompt: `You are a professional social media manager for freelance makeup artists in India.
 Analyze the uploaded makeup image and the selected content type.
 
 Content type: ${contentType}
@@ -312,18 +276,9 @@ Generate the following:
 Target audience: Indian brides and makeup clients.
 Tone: Friendly, professional and engaging.
 Encourage bookings.`,
-              },
-            ],
-          },
-        ],
-        config: {
-          systemInstruction: getSystemInstruction(language),
-          responseMimeType: "application/json",
-          responseSchema: INSTAGRAM_POST_SCHEMA as any,
-        },
-      });
-
-      return JSON.parse(response.text || "{}");
+      metadata: { systemInstruction: getSystemInstruction(language) },
+      imageBase64: base64Data,
+      schema: INSTAGRAM_POST_SCHEMA
     });
   }
 }
