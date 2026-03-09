@@ -12,13 +12,27 @@ const PORT = 3000;
 app.use(express.json({ limit: '10mb' }));
 
 // Initialize Redis
-const redis = new Redis({
-  url: process.env.REDIS_URL || "",
-  token: process.env.REDIS_TOKEN || "",
-});
+let redis: Redis | null = null;
+if (process.env.REDIS_URL && process.env.REDIS_TOKEN) {
+  try {
+    redis = new Redis({
+      url: process.env.REDIS_URL,
+      token: process.env.REDIS_TOKEN,
+    });
+    console.log("Redis initialized successfully");
+  } catch (e) {
+    console.error("Failed to initialize Redis:", e);
+  }
+} else {
+  console.warn("REDIS_URL or REDIS_TOKEN missing. Caching will be disabled.");
+}
 
 // Initialize Gemini
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const geminiKey = process.env.GEMINI_API_KEY;
+if (!geminiKey) {
+  console.error("GEMINI_API_KEY is missing! AI generation will fail.");
+}
+const ai = new GoogleGenAI({ apiKey: geminiKey || "" });
 
 // Exponential Backoff Retry Helper
 async function withRetry<T>(fn: () => Promise<T>, maxRetries = 5): Promise<T> {
@@ -58,18 +72,20 @@ app.post("/api/ai-generate", async (req, res) => {
     const cacheKey = `${contentType || 'gen'}_${city || 'india'}_${promptHash}`.toLowerCase();
 
     // 2. Check Redis Cache
-    try {
-      const cached = await redis.get(cacheKey);
-      if (cached) {
-        console.log(`Cache hit for key: ${cacheKey}`);
-        return res.json({
-          success: true,
-          data: cached,
-          cached: true
-        });
+    if (redis) {
+      try {
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          console.log(`Cache hit for key: ${cacheKey}`);
+          return res.json({
+            success: true,
+            data: cached,
+            cached: true
+          });
+        }
+      } catch (redisError) {
+        console.warn("Redis lookup failed, proceeding to AI:", redisError);
       }
-    } catch (redisError) {
-      console.warn("Redis lookup failed, proceeding to AI:", redisError);
     }
 
     // 3. Call Gemini API with Retry
@@ -95,11 +111,13 @@ app.post("/api/ai-generate", async (req, res) => {
     });
 
     // 4. Store in Cache (24 hours)
-    try {
-      await redis.set(cacheKey, result, { ex: 24 * 60 * 60 });
-      console.log(`Cached result for key: ${cacheKey}`);
-    } catch (redisError) {
-      console.warn("Redis storage failed:", redisError);
+    if (redis) {
+      try {
+        await redis.set(cacheKey, result, { ex: 24 * 60 * 60 });
+        console.log(`Cached result for key: ${cacheKey}`);
+      } catch (redisError) {
+        console.warn("Redis storage failed:", redisError);
+      }
     }
 
     // 5. Return Response
