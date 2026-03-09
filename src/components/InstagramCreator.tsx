@@ -87,9 +87,18 @@ export default function InstagramCreator({ language }: InstagramCreatorProps) {
     try {
       const data = await geminiService.generateInstagramPost(image, contentType, language);
       setResult(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Generation failed", error);
-      alert("Failed to generate content. Please try again.");
+      const isBusy = error?.message?.includes('503') || 
+                    error?.message?.includes('high demand') ||
+                    error?.status === 503 ||
+                    error?.code === 503;
+      
+      if (isBusy) {
+        alert(t.apiBusyError);
+      } else {
+        alert("Failed to generate content. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

@@ -131,5 +131,6 @@
   "festivalMakeup": "Festival Makeup",
   "softGlam": "Soft Glam",
   "clientTransformation": "Client Transformation",
-  "portfolioShowcase": "Portfolio Showcase"
+  "portfolioShowcase": "Portfolio Showcase",
+  "apiBusyError": "AI abhi bahut busy hai. Kripya kuch seconds baad fir se koshish karein."
 }

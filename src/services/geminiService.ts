@@ -91,46 +91,77 @@ export class GeminiService {
     }
   }
 
-  async generateFestivalStrategy(festival: string, currentIncome: number, language: Language = Language.EN) {
-    const response = await this.ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Generate a revenue strategy for ${festival}. My current monthly income is ₹${currentIncome}.`,
-      config: {
-        systemInstruction: getSystemInstruction(language),
-        responseMimeType: "application/json",
-        responseSchema: STRATEGY_SCHEMA as any,
-      },
-    });
+  private async withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+    let lastError: any;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        return await fn();
+      } catch (error: any) {
+        lastError = error;
+        // Check if it's a 503 error (Service Unavailable / High Demand)
+        const isRetryable = error?.message?.includes('503') || 
+                          error?.message?.includes('high demand') ||
+                          error?.status === 503 ||
+                          error?.code === 503;
+        
+        if (isRetryable && i < maxRetries - 1) {
+          const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+          console.warn(`Gemini API busy (503). Retrying in ${Math.round(delay)}ms... (Attempt ${i + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw lastError;
+  }
 
-    return JSON.parse(response.text || "{}");
+  async generateFestivalStrategy(festival: string, currentIncome: number, language: Language = Language.EN) {
+    return this.withRetry(async () => {
+      const response = await this.ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Generate a revenue strategy for ${festival}. My current monthly income is ₹${currentIncome}.`,
+        config: {
+          systemInstruction: getSystemInstruction(language),
+          responseMimeType: "application/json",
+          responseSchema: STRATEGY_SCHEMA as any,
+        },
+      });
+
+      return JSON.parse(response.text || "{}");
+    });
   }
 
   async generateFollowUpMessages(clientContext: string, language: Language = Language.EN) {
-    const response = await this.ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Generate 3 smart follow-up messages for this client context: ${clientContext}. Focus on conversion and Indian pricing psychology.`,
-      config: {
-        systemInstruction: getSystemInstruction(language),
-        responseMimeType: "application/json",
-        responseSchema: MESSAGE_SCHEMA as any,
-      },
-    });
+    return this.withRetry(async () => {
+      const response = await this.ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Generate 3 smart follow-up messages for this client context: ${clientContext}. Focus on conversion and Indian pricing psychology.`,
+        config: {
+          systemInstruction: getSystemInstruction(language),
+          responseMimeType: "application/json",
+          responseSchema: MESSAGE_SCHEMA as any,
+        },
+      });
 
-    return JSON.parse(response.text || "{}");
+      return JSON.parse(response.text || "{}");
+    });
   }
 
   async generateBusinessInsights(incomeData: any[], language: Language = Language.EN) {
-    const response = await this.ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Analyze this income data and provide growth insights: ${JSON.stringify(incomeData)}. Focus on Indian market trends and revenue maximization.`,
-      config: {
-        systemInstruction: getSystemInstruction(language),
-        responseMimeType: "application/json",
-        responseSchema: INSIGHTS_SCHEMA as any,
-      },
-    });
+    return this.withRetry(async () => {
+      const response = await this.ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Analyze this income data and provide growth insights: ${JSON.stringify(incomeData)}. Focus on Indian market trends and revenue maximization.`,
+        config: {
+          systemInstruction: getSystemInstruction(language),
+          responseMimeType: "application/json",
+          responseSchema: INSIGHTS_SCHEMA as any,
+        },
+      });
 
-    return JSON.parse(response.text || "{}");
+      return JSON.parse(response.text || "{}");
+    });
   }
 
   async generateMakeupTryOn(imageBase64: string, occasion: string) {
@@ -253,19 +284,20 @@ export class GeminiService {
   async generateInstagramPost(imageBase64: string, contentType: string, language: Language = Language.EN) {
     const base64Data = imageBase64.split(',')[1] || imageBase64;
 
-    const response = await this.ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: [
-        {
-          parts: [
-            {
-              inlineData: {
-                data: base64Data,
-                mimeType: "image/jpeg",
+    return this.withRetry(async () => {
+      const response = await this.ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: [
+          {
+            parts: [
+              {
+                inlineData: {
+                  data: base64Data,
+                  mimeType: "image/jpeg",
+                },
               },
-            },
-            {
-              text: `You are a professional social media manager for freelance makeup artists in India.
+              {
+                text: `You are a professional social media manager for freelance makeup artists in India.
 Analyze the uploaded makeup image and the selected content type.
 
 Content type: ${contentType}
@@ -280,18 +312,19 @@ Generate the following:
 Target audience: Indian brides and makeup clients.
 Tone: Friendly, professional and engaging.
 Encourage bookings.`,
-            },
-          ],
+              },
+            ],
+          },
+        ],
+        config: {
+          systemInstruction: getSystemInstruction(language),
+          responseMimeType: "application/json",
+          responseSchema: INSTAGRAM_POST_SCHEMA as any,
         },
-      ],
-      config: {
-        systemInstruction: getSystemInstruction(language),
-        responseMimeType: "application/json",
-        responseSchema: INSTAGRAM_POST_SCHEMA as any,
-      },
-    });
+      });
 
-    return JSON.parse(response.text || "{}");
+      return JSON.parse(response.text || "{}");
+    });
   }
 }
 

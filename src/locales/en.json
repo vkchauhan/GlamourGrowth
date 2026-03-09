@@ -131,5 +131,6 @@
   "festivalMakeup": "Festival Makeup",
   "softGlam": "Soft Glam",
   "clientTransformation": "Client Transformation",
-  "portfolioShowcase": "Portfolio Showcase"
+  "portfolioShowcase": "Portfolio Showcase",
+  "apiBusyError": "AI is currently busy due to high demand. Please wait a few seconds and try again."
 }
