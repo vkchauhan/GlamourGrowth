@@ -7,7 +7,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import * as faceDetection from '@tensorflow-models/face-detection';
 import '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
-import { STRATEGY_SCHEMA, MESSAGE_SCHEMA, INSIGHTS_SCHEMA, Language } from "../types";
+import { STRATEGY_SCHEMA, MESSAGE_SCHEMA, INSIGHTS_SCHEMA, INSTAGRAM_POST_SCHEMA, Language } from "../types";
 
 const getSystemInstruction = (language: Language) => {
   const langPrompt = language === Language.HI 
@@ -248,6 +248,50 @@ export class GeminiService {
         `${pollinationsBase}%20studio%20lighting?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`
       ];
     }
+  }
+
+  async generateInstagramPost(imageBase64: string, contentType: string, language: Language = Language.EN) {
+    const base64Data = imageBase64.split(',')[1] || imageBase64;
+
+    const response = await this.ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [
+        {
+          parts: [
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType: "image/jpeg",
+              },
+            },
+            {
+              text: `You are a professional social media manager for freelance makeup artists in India.
+Analyze the uploaded makeup image and the selected content type.
+
+Content type: ${contentType}
+
+Generate the following:
+1. Instagram Caption (50-120 words, include emojis)
+2. Instagram Reel Script (Scene by scene)
+3. Instagram Story Text
+4. Call-To-Action encouraging bookings
+5. 15 relevant hashtags (mix of niche, engagement, and location-based like #DelhiMakeupArtist)
+
+Target audience: Indian brides and makeup clients.
+Tone: Friendly, professional and engaging.
+Encourage bookings.`,
+            },
+          ],
+        },
+      ],
+      config: {
+        systemInstruction: getSystemInstruction(language),
+        responseMimeType: "application/json",
+        responseSchema: INSTAGRAM_POST_SCHEMA as any,
+      },
+    });
+
+    return JSON.parse(response.text || "{}");
   }
 }
 
