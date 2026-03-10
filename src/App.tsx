@@ -61,10 +61,13 @@ export default function App() {
   const [user, setUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.DASHBOARD);
-  const [language, setLanguage] = useState<Language>(() => {
+  const [language, setLanguage] = useState<Language>(Language.EN);
+  
+  useEffect(() => {
     const saved = localStorage.getItem("glamour_growth_lang");
-    return (saved as Language) || Language.EN;
-  });
+    if (saved) setLanguage(saved as Language);
+  }, []);
+
   const t = translations[language];
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([]);
   const [isAddingIncome, setIsAddingIncome] = useState(false);
@@ -108,12 +111,15 @@ export default function App() {
 
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isListening, setIsListening] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
-    'Notification' in window ? Notification.permission : 'default'
-  );
+  const [isOnline, setIsOnline] = useState(true);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
   useEffect(() => {
+    setIsOnline(navigator.onLine);
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 

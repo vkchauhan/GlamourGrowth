@@ -3,9 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as faceDetection from '@tensorflow-models/face-detection';
-import '@tensorflow/tfjs-backend-webgl';
-import * as tf from '@tensorflow/tfjs-core';
 import { STRATEGY_SCHEMA, MESSAGE_SCHEMA, INSIGHTS_SCHEMA, INSTAGRAM_POST_SCHEMA, Language } from "../types";
 
 const getSystemInstruction = (language: Language) => {
@@ -24,65 +21,10 @@ Always produce valid, parsable JSON. Keep responses concise but strategic.`;
 };
 
 export class GeminiService {
-  private detector: faceDetection.FaceDetector | null = null;
-
-  private async initDetector() {
-    if (this.detector) return this.detector;
-    await tf.ready();
-    const model = faceDetection.SupportedModels.MediaPipeFaceDetector;
-    const detectorConfig: faceDetection.MediaPipeFaceDetectorTfjsModelConfig = {
-      runtime: 'tfjs',
-      maxFaces: 1,
-    };
-    this.detector = await faceDetection.createDetector(model, detectorConfig);
-    return this.detector;
-  }
-
   private async cropFace(imageBase64: string): Promise<string | null> {
-    try {
-      const detector = await this.initDetector();
-      const img = new Image();
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = imageBase64;
-      });
-
-      const faces = await detector.estimateFaces(img);
-      if (faces.length === 0) return null;
-
-      const face = faces[0];
-      const { xMin, yMin, width, height } = face.box;
-
-      // Create a tight crop with some padding
-      const padding = 0.2;
-      const pX = width * padding;
-      const pY = height * padding;
-
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return null;
-
-      canvas.width = 512;
-      canvas.height = 512;
-
-      ctx.drawImage(
-        img,
-        Math.max(0, xMin - pX),
-        Math.max(0, yMin - pY),
-        width + 2 * pX,
-        height + 2 * pY,
-        0,
-        0,
-        512,
-        512
-      );
-
-      return canvas.toDataURL('image/jpeg', 0.9).split(',')[1];
-    } catch (error) {
-      console.error("Face detection/cropping failed:", error);
-      return null;
-    }
+    // Face detection is currently disabled due to build compatibility issues
+    // Returning the original image for now
+    return imageBase64.split(',')[1] || imageBase64;
   }
 
   private async callAiGateway(params: {
@@ -101,7 +43,7 @@ export class GeminiService {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "AI Gateway request failed");
+      throw new Error(errorData.error || "AI Gateway request failed");
     }
 
     const result = await response.json();
