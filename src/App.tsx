@@ -45,6 +45,8 @@ import en from "./locales/en.json";
 import hi from "./locales/hi.json";
 import Login from "./components/Login";
 import VirtualTryOn from "./components/VirtualTryOn";
+import BookingForm from "./components/BookingForm";
+import { Booking } from "./types";
 
 const translations = {
   [Language.EN]: en,
@@ -66,12 +68,6 @@ export default function App() {
   const t = translations[language];
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([]);
   const [isAddingIncome, setIsAddingIncome] = useState(false);
-  const [newEntry, setNewEntry] = useState<Partial<IncomeEntry>>({
-    date: new Date().toISOString().split('T')[0],
-    category: "Bridal",
-    amount: 0,
-    clientName: ""
-  });
 
   // AI States
   const [strategy, setStrategy] = useState<any>(null);
@@ -175,16 +171,39 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Load data from localStorage
+  // Load data from API
   useEffect(() => {
-    const saved = localStorage.getItem("glamour_growth_income");
-    if (saved) {
+    const fetchBookings = async () => {
       try {
-        setIncomeEntries(JSON.parse(saved));
+        const response = await fetch('/api/bookings');
+        if (response.ok) {
+          const data = await response.json();
+          // Map API response to IncomeEntry format
+          const mapped: IncomeEntry[] = data.map((b: any) => ({
+            id: b.booking_id,
+            date: b.booking_date,
+            amount: b.total_amount,
+            category: b.services?.[0]?.name || "General",
+            clientName: b.client_name,
+            services: b.services
+          }));
+          setIncomeEntries(mapped);
+        } else {
+          // Fallback to localStorage if API fails
+          const saved = localStorage.getItem("glamour_growth_income");
+          if (saved) {
+            setIncomeEntries(JSON.parse(saved));
+          }
+        }
       } catch (e) {
-        console.error("Failed to parse saved income", e);
+        console.error("Failed to fetch bookings", e);
+        const saved = localStorage.getItem("glamour_growth_income");
+        if (saved) {
+          setIncomeEntries(JSON.parse(saved));
+        }
       }
-    }
+    };
+    fetchBookings();
   }, []);
 
   // Save data to localStorage
@@ -212,15 +231,14 @@ export default function App() {
     return data;
   }, [incomeEntries, t]);
 
-  const handleAddIncome = () => {
-    if (!newEntry.amount || !newEntry.clientName) return;
-    
+  const handleAddBooking = (booking: Booking) => {
     const entry: IncomeEntry = {
-      id: crypto.randomUUID(),
-      date: newEntry.date || new Date().toISOString().split('T')[0],
-      amount: Number(newEntry.amount),
-      category: newEntry.category || "Bridal",
-      clientName: newEntry.clientName || "Unknown Client"
+      id: booking.booking_id || crypto.randomUUID(),
+      date: booking.date,
+      amount: booking.total_amount,
+      category: booking.services[0]?.name || "General",
+      clientName: booking.client_name,
+      services: booking.services
     };
     
     setIncomeEntries([entry, ...incomeEntries]);
@@ -230,17 +248,19 @@ export default function App() {
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       pwaService.registerBackgroundSync('sync-leads');
     }
-
-    setNewEntry({
-      date: new Date().toISOString().split('T')[0],
-      category: "Bridal",
-      amount: 0,
-      clientName: ""
-    });
   };
 
-  const deleteEntry = (id: string) => {
-    setIncomeEntries(incomeEntries.filter(e => e.id !== id));
+  const deleteEntry = async (id: string) => {
+    try {
+      const response = await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        setIncomeEntries(incomeEntries.filter(e => e.id !== id));
+      }
+    } catch (e) {
+      console.error("Failed to delete booking", e);
+      // Fallback to local delete if API fails
+      setIncomeEntries(incomeEntries.filter(e => e.id !== id));
+    }
   };
 
   const handleLogout = async () => {
@@ -527,9 +547,18 @@ export default function App() {
                             </div>
                             <div>
                               <p className="text-base lg:text-lg font-medium">{entry.clientName}</p>
-                              <p className="text-[10px] lg:text-xs text-[#8E8E8E] flex items-center gap-2 lg:gap-3 mt-0.5 lg:mt-1">
-                                <span className="uppercase tracking-widest font-bold">{categoryTranslations[entry.category] || entry.category}</span>
-                                <span className="w-1 h-1 rounded-full bg-premium-gold" />
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {entry.services ? entry.services.map((s: any, idx: number) => (
+                                  <span key={idx} className="px-2 py-0.5 bg-premium-bg border border-premium-border rounded-full text-[8px] font-bold uppercase tracking-tighter">
+                                    {s.name}
+                                  </span>
+                                )) : (
+                                  <span className="px-2 py-0.5 bg-premium-bg border border-premium-border rounded-full text-[8px] font-bold uppercase tracking-tighter">
+                                    {categoryTranslations[entry.category] || entry.category}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] lg:text-xs text-[#8E8E8E] flex items-center gap-2 lg:gap-3 mt-1.5">
                                 <span className="italic">{new Date(entry.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
                               </p>
                             </div>
@@ -815,97 +844,12 @@ export default function App() {
       {/* Add Income Modal */}
       <AnimatePresence>
         {isAddingIncome && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-8">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsAddingIncome(false)}
-              className="absolute inset-0 bg-premium-ink/60 backdrop-blur-md"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 40 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 40 }}
-              className="relative w-full max-w-xl bg-white rounded-[32px] lg:rounded-[56px] shadow-3xl overflow-hidden border border-premium-border max-h-[90vh] overflow-y-auto"
-            >
-              <div className="p-8 lg:p-12 space-y-8 lg:space-y-10">
-                <header>
-                  <h3 className="text-2xl lg:text-3xl font-serif font-medium italic">{t.recordNewBooking}</h3>
-                  <p className="text-[#666] text-base lg:text-lg font-light italic mt-1 lg:mt-2">{t.recordNewBookingSub}</p>
-                </header>
-
-                <div className="space-y-6 lg:space-y-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                    <div className="space-y-2 lg:space-y-3">
-                      <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold">{t.date}</label>
-                      <input 
-                        type="date" 
-                        value={newEntry.date}
-                        onChange={(e) => setNewEntry({ ...newEntry, date: e.target.value })}
-                        className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
-                      />
-                    </div>
-                    <div className="space-y-2 lg:space-y-3">
-                      <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold">{t.category}</label>
-                      <select 
-                        value={newEntry.category}
-                        onChange={(e) => setNewEntry({ ...newEntry, category: e.target.value })}
-                        className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
-                      >
-                        <option value="Bridal">{t.bridal}</option>
-                        <option value="Party">{t.party}</option>
-                        <option value="Festival">{t.festival}</option>
-                        <option value="Pre-wedding">{t.preWedding}</option>
-                        <option value="Engagement">{t.engagement}</option>
-                        <option value="Editorial">{t.editorial}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 lg:space-y-3">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold">{t.clientName}</label>
-                    <input 
-                      type="text" 
-                      placeholder={t.clientNamePlaceholder}
-                      value={newEntry.clientName}
-                      onChange={(e) => setNewEntry({ ...newEntry, clientName: e.target.value })}
-                      className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
-                    />
-                  </div>
-
-                  <div className="space-y-2 lg:space-y-3">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold">{t.amount}</label>
-                    <div className="relative">
-                      <IndianRupee className="absolute left-4 lg:left-5 top-1/2 -translate-y-1/2 w-4 lg:w-5 h-4 lg:h-5 text-premium-gold" />
-                      <input 
-                        type="number" 
-                        placeholder="0"
-                        value={newEntry.amount || ""}
-                        onChange={(e) => setNewEntry({ ...newEntry, amount: Number(e.target.value) })}
-                        className="w-full p-4 lg:p-5 pl-10 lg:pl-12 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-                  <button 
-                    onClick={() => setIsAddingIncome(false)}
-                    className="order-2 lg:order-1 flex-1 px-8 lg:px-10 py-4 lg:py-5 rounded-2xl font-bold text-[#666] hover:bg-premium-bg transition-colors text-sm lg:text-base"
-                  >
-                    {t.cancel}
-                  </button>
-                  <button 
-                    onClick={handleAddIncome}
-                    className="order-1 lg:order-2 flex-1 bg-premium-ink text-white px-8 lg:px-10 py-4 lg:py-5 rounded-2xl font-bold hover:bg-[#333] transition-all shadow-2xl shadow-black/10 text-sm lg:text-base"
-                  >
-                    {t.saveBooking}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+          <BookingForm 
+            onClose={() => setIsAddingIncome(false)}
+            onSuccess={handleAddBooking}
+            language={language}
+            translations={t}
+          />
         )}
       </AnimatePresence>
     </div>

@@ -18,12 +18,36 @@ export enum Language {
   HI = "hi",
 }
 
+export interface Service {
+  service_id: string;
+  name: string;
+  default_price: number;
+  category?: string;
+}
+
+export interface BookingService {
+  service_id: string;
+  name?: string;
+  price: number;
+}
+
+export interface Booking {
+  booking_id?: string;
+  client_name: string;
+  client_phone?: string;
+  date: string;
+  services: BookingService[];
+  total_amount: number;
+  created_at?: string;
+}
+
 export interface IncomeEntry {
   id: string;
   date: string;
   amount: number;
   category: string; // e.g., "Bridal", "Party", "Festival", "Pre-wedding"
   clientName: string;
+  services?: BookingService[];
 }
 
 export const FESTIVALS = [

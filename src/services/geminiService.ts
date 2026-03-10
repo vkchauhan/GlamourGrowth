@@ -135,12 +135,12 @@ export class GeminiService {
 
   async generateMakeupTryOn(imageBase64: string, occasion: string) {
     const base64Data = imageBase64.split(',')[1] || imageBase64;
-    
+
     // Identity Preservation Tweak: Face Crop
     const faceCropBase64 = await this.cropFace(imageBase64);
 
     const realismModifiers = "photorealistic Indian woman, real skin texture, natural pores, accurate Indian skin tone, professional bridal photography, soft studio lighting, DSLR photo, 85mm portrait lens, shallow depth of field, high dynamic range, ultra realistic makeup.";
-    
+
     const negativePrompt = "blurry, cartoon, anime, unrealistic skin, plastic skin, oversmoothed skin, distorted face, bad anatomy, extra eyes, extra nose, extra lips, mutated face, duplicate face, low resolution, noisy image, washed out colors";
 
     const getClothingDescription = (occ: string) => {
@@ -170,12 +170,12 @@ export class GeminiService {
       // We'll generate 3 variations. To ensure identity preservation, we'll use SDXL and img2img.
       // Since AI Horde might not support complex IP-Adapter + ControlNet in a single simple call,
       // we'll use the best available parameters for identity preservation.
-      
+
       const results: string[] = [];
 
       for (const style of variations) {
         const prompt = getPrompt(style);
-        
+
         const hordeResponse = await fetch("https://aihorde.net/api/v2/generate/async", {
           method: "POST",
           headers: {
@@ -202,18 +202,18 @@ export class GeminiService {
 
         if (hordeResponse.ok) {
           const { id } = await hordeResponse.json();
-          
+
           let attempts = 0;
           const maxAttempts = 30; // 60 seconds total
           while (attempts < maxAttempts) {
             await new Promise(resolve => setTimeout(resolve, 2000));
-            
+
             // Step 1: Check generation status
             const checkRes = await fetch(`https://aihorde.net/api/v2/generate/check/${id}`);
             if (!checkRes.ok) continue;
-            
+
             const checkData = await checkRes.json();
-            
+
             // Step 2: If done, retrieve results
             if (checkData.done) {
               const statusRes = await fetch(`https://aihorde.net/api/v2/generate/status/${id}`);
@@ -225,9 +225,9 @@ export class GeminiService {
                 }
               }
             }
-            
+
             if (checkData.faulted) break;
-            
+
             attempts++;
           }
         }
@@ -242,11 +242,7 @@ export class GeminiService {
       const pollinationsPrompt = `Realistic Indian ${occasion} makeup look, ${clothingDesc}, professional makeup artist style, HD beauty photography, natural skin texture, soft lighting`;
       const pollinationsBase = `https://image.pollinations.ai/prompt/${encodeURIComponent(pollinationsPrompt)}`;
 
-      return [
-        `${pollinationsBase}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`,
-        `${pollinationsBase}%20portrait?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`,
-        `${pollinationsBase}%20studio%20lighting?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`
-      ];
+      return [\n        `${pollinationsBase}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`,\n        `${pollinationsBase}%20portrait?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`,\n        `${pollinationsBase}%20studio%20lighting?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`\\n      ];
     }
   }
 }

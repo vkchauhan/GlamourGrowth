@@ -86,7 +86,7 @@ export default function VirtualTryOn({ language }: VirtualTryOnProps) {
   };
 
   const occasionTranslations: Record<string, string> = {
-    "Bridal / Wedding": t.bridalWedding,
+    "Bridal / Wedding": t.bridalsWedding,
     "Pre-Wedding": t.preWeddingOccasion,
     "Party": t.partyOccasion,
     "Reception": t.receptionOccasion,
