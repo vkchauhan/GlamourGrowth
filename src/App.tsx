@@ -21,8 +21,7 @@ import {
   Mic,
   MicOff,
   Bell,
-  WifiOff,
-  Instagram
+  WifiOff
 } from "lucide-react";
 import { 
   BarChart, 
@@ -46,7 +45,6 @@ import en from "./locales/en.json";
 import hi from "./locales/hi.json";
 import Login from "./components/Login";
 import VirtualTryOn from "./components/VirtualTryOn";
-import InstagramCreator from "./components/InstagramCreator";
 
 const translations = {
   [Language.EN]: en,
@@ -61,13 +59,10 @@ export default function App() {
   const [user, setUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.DASHBOARD);
-  const [language, setLanguage] = useState<Language>(Language.EN);
-  
-  useEffect(() => {
+  const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem("glamour_growth_lang");
-    if (saved) setLanguage(saved as Language);
-  }, []);
-
+    return (saved as Language) || Language.EN;
+  });
   const t = translations[language];
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([]);
   const [isAddingIncome, setIsAddingIncome] = useState(false);
@@ -111,15 +106,12 @@ export default function App() {
 
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isListening, setIsListening] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    'Notification' in window ? Notification.permission : 'default'
+  );
 
   useEffect(() => {
-    setIsOnline(navigator.onLine);
-    if ('Notification' in window) {
-      setNotificationPermission(Notification.permission);
-    }
-
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -389,7 +381,6 @@ export default function App() {
             { id: AppTab.MESSAGES, label: t.smartMessages, icon: MessageSquareText },
             { id: AppTab.INSIGHTS, label: t.growthInsights, icon: TrendingUp },
             { id: AppTab.TRY_ON, label: t.virtualTryOn, icon: Sparkles },
-            { id: AppTab.INSTAGRAM_CREATOR, label: t.instagramCreator, icon: Instagram },
           ].map((item) => (
             <button
               key={item.id}
@@ -794,18 +785,6 @@ export default function App() {
                 <VirtualTryOn language={language} />
               </motion.div>
             )}
-
-            {activeTab === AppTab.INSTAGRAM_CREATOR && (
-              <motion.div
-                key="instagram-creator"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-8 lg:space-y-12"
-              >
-                <InstagramCreator language={language} />
-              </motion.div>
-            )}
           </AnimatePresence>
         </div>
       </main>
@@ -818,7 +797,6 @@ export default function App() {
           { id: AppTab.MESSAGES, icon: MessageSquareText, label: t.messages },
           { id: AppTab.INSIGHTS, icon: TrendingUp, label: t.insights },
           { id: AppTab.TRY_ON, icon: Sparkles, label: t.tryOn },
-          { id: AppTab.INSTAGRAM_CREATOR, icon: Instagram, label: "Insta" },
         ].map((item) => (
           <button
             key={item.id}

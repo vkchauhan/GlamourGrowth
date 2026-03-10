@@ -11,7 +11,6 @@ export enum AppTab {
   MESSAGES = "messages",
   INSIGHTS = "insights",
   TRY_ON = "try_on",
-  INSTAGRAM_CREATOR = "instagram_creator",
 }
 
 export enum Language {
@@ -84,16 +83,4 @@ export const INSIGHTS_SCHEMA = {
     },
   },
   required: ["summary", "recommendations", "nextSteps"],
-};
-
-export const INSTAGRAM_POST_SCHEMA = {
-  type: Type.OBJECT,
-  properties: {
-    caption: { type: Type.STRING },
-    hashtags: { type: Type.STRING },
-    reelScript: { type: Type.STRING },
-    storyText: { type: Type.STRING },
-    cta: { type: Type.STRING },
-  },
-  required: ["caption", "hashtags", "reelScript", "storyText", "cta"],
 };

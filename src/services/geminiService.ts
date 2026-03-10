@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { STRATEGY_SCHEMA, MESSAGE_SCHEMA, INSIGHTS_SCHEMA, INSTAGRAM_POST_SCHEMA, Language } from "../types";
+import { GoogleGenAI, Type } from "@google/genai";
+import * as faceDetection from '@tensorflow-models/face-detection';
+import '@tensorflow/tfjs-backend-webgl';
+import * as tf from '@tensorflow/tfjs-core';
+import { STRATEGY_SCHEMA, MESSAGE_SCHEMA, INSIGHTS_SCHEMA, Language } from "../types";
 
 const getSystemInstruction = (language: Language) => {
   const langPrompt = language === Language.HI 
@@ -21,63 +25,112 @@ Always produce valid, parsable JSON. Keep responses concise but strategic.`;
 };
 
 export class GeminiService {
-  private async cropFace(imageBase64: string): Promise<string | null> {
-    // Face detection is currently disabled due to build compatibility issues
-    // Returning the original image for now
-    return imageBase64.split(',')[1] || imageBase64;
+  private ai: GoogleGenAI;
+  private detector: faceDetection.FaceDetector | null = null;
+
+  constructor() {
+    this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
   }
 
-  private async callAiGateway(params: {
-    contentType: string;
-    city?: string;
-    prompt: string;
-    metadata?: any;
-    imageBase64?: string;
-    schema?: any;
-  }) {
-    const response = await fetch("/api/ai-generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-    });
+  private async initDetector() {
+    if (this.detector) return this.detector;
+    await tf.ready();
+    const model = faceDetection.SupportedModels.MediaPipeFaceDetector;
+    const detectorConfig: faceDetection.MediaPipeFaceDetectorTfjsModelConfig = {
+      runtime: 'tfjs',
+      maxFaces: 1,
+    };
+    this.detector = await faceDetection.createDetector(model, detectorConfig);
+    return this.detector;
+  }
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "AI Gateway request failed");
+  private async cropFace(imageBase64: string): Promise<string | null> {
+    try {
+      const detector = await this.initDetector();
+      const img = new Image();
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = imageBase64;
+      });
+
+      const faces = await detector.estimateFaces(img);
+      if (faces.length === 0) return null;
+
+      const face = faces[0];
+      const { xMin, yMin, width, height } = face.box;
+
+      // Create a tight crop with some padding
+      const padding = 0.2;
+      const pX = width * padding;
+      const pY = height * padding;
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+
+      canvas.width = 512;
+      canvas.height = 512;
+
+      ctx.drawImage(
+        img,
+        Math.max(0, xMin - pX),
+        Math.max(0, yMin - pY),
+        width + 2 * pX,
+        height + 2 * pY,
+        0,
+        0,
+        512,
+        512
+      );
+
+      return canvas.toDataURL('image/jpeg', 0.9).split(',')[1];
+    } catch (error) {
+      console.error("Face detection/cropping failed:", error);
+      return null;
     }
-
-    const result = await response.json();
-    return result.data;
   }
 
   async generateFestivalStrategy(festival: string, currentIncome: number, language: Language = Language.EN) {
-    return this.callAiGateway({
-      contentType: "strategy",
-      city: "india",
-      prompt: `Generate a revenue strategy for ${festival}. My current monthly income is ₹${currentIncome}.`,
-      metadata: { systemInstruction: getSystemInstruction(language) },
-      schema: STRATEGY_SCHEMA
+    const response = await this.ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Generate a revenue strategy for ${festival}. My current monthly income is ₹${currentIncome}.`,
+      config: {
+        systemInstruction: getSystemInstruction(language),
+        responseMimeType: "application/json",
+        responseSchema: STRATEGY_SCHEMA as any,
+      },
     });
+
+    return JSON.parse(response.text || "{}");
   }
 
   async generateFollowUpMessages(clientContext: string, language: Language = Language.EN) {
-    return this.callAiGateway({
-      contentType: "messages",
-      city: "india",
-      prompt: `Generate 3 smart follow-up messages for this client context: ${clientContext}. Focus on conversion and Indian pricing psychology.`,
-      metadata: { systemInstruction: getSystemInstruction(language) },
-      schema: MESSAGE_SCHEMA
+    const response = await this.ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Generate 3 smart follow-up messages for this client context: ${clientContext}. Focus on conversion and Indian pricing psychology.`,
+      config: {
+        systemInstruction: getSystemInstruction(language),
+        responseMimeType: "application/json",
+        responseSchema: MESSAGE_SCHEMA as any,
+      },
     });
+
+    return JSON.parse(response.text || "{}");
   }
 
   async generateBusinessInsights(incomeData: any[], language: Language = Language.EN) {
-    return this.callAiGateway({
-      contentType: "insights",
-      city: "india",
-      prompt: `Analyze this income data and provide growth insights: ${JSON.stringify(incomeData)}. Focus on Indian market trends and revenue maximization.`,
-      metadata: { systemInstruction: getSystemInstruction(language) },
-      schema: INSIGHTS_SCHEMA
+    const response = await this.ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Analyze this income data and provide growth insights: ${JSON.stringify(incomeData)}. Focus on Indian market trends and revenue maximization.`,
+      config: {
+        systemInstruction: getSystemInstruction(language),
+        responseMimeType: "application/json",
+        responseSchema: INSIGHTS_SCHEMA as any,
+      },
     });
+
+    return JSON.parse(response.text || "{}");
   }
 
   async generateMakeupTryOn(imageBase64: string, occasion: string) {
@@ -195,33 +248,6 @@ export class GeminiService {
         `${pollinationsBase}%20studio%20lighting?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`
       ];
     }
-  }
-
-  async generateInstagramPost(imageBase64: string, contentType: string, language: Language = Language.EN) {
-    const base64Data = imageBase64.split(',')[1] || imageBase64;
-
-    return this.callAiGateway({
-      contentType: "instagram",
-      city: "india",
-      prompt: `You are a professional social media manager for freelance makeup artists in India.
-Analyze the uploaded makeup image and the selected content type.
-
-Content type: ${contentType}
-
-Generate the following:
-1. Instagram Caption (50-120 words, include emojis)
-2. Instagram Reel Script (Scene by scene)
-3. Instagram Story Text
-4. Call-To-Action encouraging bookings
-5. 15 relevant hashtags (mix of niche, engagement, and location-based like #DelhiMakeupArtist)
-
-Target audience: Indian brides and makeup clients.
-Tone: Friendly, professional and engaging.
-Encourage bookings.`,
-      metadata: { systemInstruction: getSystemInstruction(language) },
-      imageBase64: base64Data,
-      schema: INSTAGRAM_POST_SCHEMA
-    });
   }
 }
 

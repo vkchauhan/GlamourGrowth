@@ -1,5 +1,5 @@
 {
   "name": "Glamour Growth",
-  "description": "Business growth assistant for Indian freelance makeup artists, with AI-powered Instagram content creation, festival strategies, and smart client follow-ups.",
-  "requestFramePermissions": ["camera", "microphone"]
+  "description": "Business growth assistant for Indian freelance makeup artists, specializing in festival strategies and client communication.",
+  "requestFramePermissions": []
 }
