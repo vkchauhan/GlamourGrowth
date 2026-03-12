@@ -396,8 +396,8 @@ export default function App() {
 
         <nav className="flex-1 px-6 space-y-2">
           {[
-            { id: AppTab.DASHBOARD, label: t.dashboard, icon: LayoutDashboard },
-            { id: AppTab.STRATEGY, label: t.festivalStrategy, icon: Calendar },
+            { id: AppTab.DASHBOARD, label: t.bookings, icon: Calendar },
+            { id: AppTab.STRATEGY, label: t.festivalStrategy, icon: LayoutDashboard },
             { id: AppTab.MESSAGES, label: t.smartMessages, icon: MessageSquareText },
             { id: AppTab.INSIGHTS, label: t.growthInsights, icon: TrendingUp },
             { id: AppTab.TRY_ON, label: t.virtualTryOn, icon: Sparkles },
@@ -821,8 +821,8 @@ export default function App() {
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-premium-border px-4 py-3 flex justify-around items-center z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         {[
-          { id: AppTab.DASHBOARD, icon: LayoutDashboard, label: t.home },
-          { id: AppTab.STRATEGY, icon: Calendar, label: t.strategy },
+          { id: AppTab.DASHBOARD, icon: Calendar, label: t.bookings },
+          { id: AppTab.STRATEGY, icon: LayoutDashboard, label: t.strategy },
           { id: AppTab.MESSAGES, icon: MessageSquareText, label: t.messages },
           { id: AppTab.INSIGHTS, icon: TrendingUp, label: t.insights },
           { id: AppTab.TRY_ON, icon: Sparkles, label: t.tryOn },

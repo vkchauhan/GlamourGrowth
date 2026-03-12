@@ -108,3 +108,15 @@ export const INSIGHTS_SCHEMA = {
   },
   required: ["summary", "recommendations", "nextSteps"],
 };
+
+export const INSTAGRAM_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    caption: { type: Type.STRING },
+    hashtags: { type: Type.STRING },
+    reelScript: { type: Type.STRING },
+    storyText: { type: Type.STRING },
+    cta: { type: Type.STRING },
+  },
+  required: ["caption", "hashtags", "reelScript", "storyText", "cta"],
+};

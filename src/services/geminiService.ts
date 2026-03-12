@@ -7,7 +7,7 @@ import { GoogleGenAI } from "@google/genai";
 import * as faceDetection from '@tensorflow-models/face-detection';
 import '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
-import { STRATEGY_SCHEMA, MESSAGE_SCHEMA, INSIGHTS_SCHEMA, Language } from "../types";
+import { STRATEGY_SCHEMA, MESSAGE_SCHEMA, INSIGHTS_SCHEMA, INSTAGRAM_SCHEMA, Language } from "../types";
 
 const getSystemInstruction = (language: Language) => {
   const langPrompt = language === Language.HI 
@@ -127,6 +127,20 @@ export class GeminiService {
         systemInstruction: getSystemInstruction(language),
         responseMimeType: "application/json",
         responseSchema: INSIGHTS_SCHEMA as any,
+      },
+    });
+
+    return JSON.parse(response.text || "{}");
+  }
+
+  async generateInstagramPost(contentType: string, topic: string, language: Language = Language.EN) {
+    const response = await this.ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Generate Instagram content for a ${contentType} about ${topic}. Focus on Indian makeup artist context and client attraction.`,
+      config: {
+        systemInstruction: getSystemInstruction(language),
+        responseMimeType: "application/json",
+        responseSchema: INSTAGRAM_SCHEMA as any,
       },
     });
 

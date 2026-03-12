@@ -10,11 +10,11 @@ export const pwaService = {
     return permission === 'granted';
   },
 
-  async registerBackgroundSync() {
+  async registerBackgroundSync(tag: string = 'sync-income') {
     if (!('serviceWorker' in navigator) || !('SyncManager' in window)) return;
     const registration = await navigator.serviceWorker.ready;
     try {
-      await (registration as any).sync.register('sync-income');
+      await (registration as any).sync.register(tag);
     } catch (err) {
       console.error('Background sync registration failed:', err);
     }
@@ -32,6 +32,6 @@ export const pwaService = {
         dateOfArrival: Date.now(),
         primaryKey: 1
       }
-    });
+    } as any);
   }
 };
