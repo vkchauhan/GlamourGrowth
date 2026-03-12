@@ -27,6 +27,7 @@ async function startServer() {
   app.post('/api/bookings', (req, res) => {
     try {
       const body = req.body;
+      console.log('Incoming booking request:', body);
       
       let services = body.services;
       if (!services && body.service_id) {
@@ -37,10 +38,16 @@ async function startServer() {
       }
 
       if (!services || !Array.isArray(services) || services.length === 0) {
+        console.error('Validation failed: No services provided');
         return res.status(400).json({ error: 'At least one service is required' });
       }
 
       const { client_name, client_phone, date } = body;
+      if (!client_name) {
+        console.error('Validation failed: Client name is required');
+        return res.status(400).json({ error: 'Client name is required' });
+      }
+
       const booking_id = uuidv4();
       const total_amount = services.reduce((sum, s) => sum + (s.price || 0), 0);
 
@@ -72,10 +79,11 @@ async function startServer() {
       });
 
       const id = transaction();
+      console.log('Booking saved successfully:', id);
       res.json({ success: true, booking_id: id, total_amount });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error('Error saving booking:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
     }
   });
 

@@ -138,7 +138,8 @@ export default function BookingForm({ onClose, onSuccess, language, translations
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save booking');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save booking');
       }
 
       const result = await response.json();
