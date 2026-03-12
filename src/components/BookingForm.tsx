@@ -124,7 +124,9 @@ export default function BookingForm({ onClose, onSuccess, language, translations
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/bookings', {
+      const url = '/api/bookings';
+      console.log('BookingForm: Submitting to', window.location.origin + url);
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,9 +139,10 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         }),
       });
 
+      console.log('BookingForm: Response status', response.status);
       if (!response.ok) {
         const text = await response.text().catch(() => 'Could not read response body');
-        console.error('Server returned error:', response.status, text);
+        console.error('BookingForm: Server returned error:', response.status, text);
         let errorMessage = 'Failed to save booking';
         try {
           const errorData = JSON.parse(text);

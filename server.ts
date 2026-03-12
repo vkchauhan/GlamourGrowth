@@ -4,30 +4,82 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import db from './src/lib/db.ts';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const logFile = path.join(process.cwd(), 'server.log');
+function logToFile(msg: string) {
+  const entry = `[${new Date().toISOString()}] ${msg}\n`;
+  try {
+    fs.appendFileSync(logFile, entry);
+  } catch (e) {
+    console.error('Failed to write to log file', e);
+  }
+}
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Clear log file on start
+  fs.writeFileSync(logFile, `Server started at ${new Date().toISOString()}\n`);
+
+  // Request logging middleware
+  app.use((req, res, next) => {
+    logToFile(`${req.method} ${req.url} [Host: ${req.headers.host}] [User-Agent: ${req.headers['user-agent']}]`);
+    next();
+  });
+
   app.use(express.json());
 
   // API Routes
-  app.get('/api/services', (req, res) => {
+  app.get(['/api/services', '/api/services/'], (req, res) => {
     try {
       const services = db.prepare('SELECT * FROM services ORDER BY name ASC').all();
       res.json(services);
     } catch (error) {
+      console.error('Error fetching services:', error);
       res.status(500).json({ error: 'Failed to fetch services' });
     }
   });
 
-  app.post('/api/bookings', (req, res) => {
+  app.get(['/api/bookings', '/api/bookings/'], (req, res) => {
+    try {
+      const bookings = db.prepare(`
+        SELECT b.*, 
+               (SELECT json_group_array(
+                  json_object(
+                    'service_id', bs.service_id,
+                    'name', s.name,
+                    'price', bs.service_price
+                  )
+                )
+                FROM booking_services bs
+                JOIN services s ON bs.service_id = s.service_id
+                WHERE bs.booking_id = b.booking_id
+               ) as services
+        FROM bookings b
+        ORDER BY b.booking_date DESC
+      `).all();
+
+      const formattedBookings = bookings.map((b: any) => ({
+        ...b,
+        services: JSON.parse(b.services)
+      }));
+
+      res.json(formattedBookings);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      res.status(500).json({ error: 'Failed to fetch bookings' });
+    }
+  });
+
+  app.post(['/api/bookings', '/api/bookings/'], (req, res) => {
     try {
       const body = req.body;
-      console.log('Incoming booking request:', body);
+      logToFile(`Incoming booking request: ${JSON.stringify(body)}`);
       
       let services = body.services;
       if (!services && body.service_id) {
@@ -79,48 +131,13 @@ async function startServer() {
       });
 
       const id = transaction();
-      console.log('Booking saved successfully:', id);
+      logToFile(`Booking saved successfully: ${id}`);
       res.json({ success: true, booking_id: id, total_amount });
     } catch (error) {
+      logToFile(`Error saving booking: ${error}`);
       console.error('Error saving booking:', error);
       const message = error instanceof Error ? error.message : String(error);
       res.status(500).json({ error: message });
-    }
-  });
-
-  // Global error handler
-  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error('Unhandled error:', err);
-    res.status(500).json({ error: err.message || 'Internal Server Error' });
-  });
-
-  app.get('/api/bookings', (req, res) => {
-    try {
-      const bookings = db.prepare(`
-        SELECT b.*, 
-               (SELECT json_group_array(
-                  json_object(
-                    'service_id', bs.service_id,
-                    'name', s.name,
-                    'price', bs.service_price
-                  )
-                )
-                FROM booking_services bs
-                JOIN services s ON bs.service_id = s.service_id
-                WHERE bs.booking_id = b.booking_id
-               ) as services
-        FROM bookings b
-        ORDER BY b.booking_date DESC
-      `).all();
-
-      const formattedBookings = bookings.map((b: any) => ({
-        ...b,
-        services: JSON.parse(b.services)
-      }));
-
-      res.json(formattedBookings);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch bookings' });
     }
   });
 
@@ -130,8 +147,22 @@ async function startServer() {
       db.prepare('DELETE FROM bookings WHERE booking_id = ?').run(id);
       res.json({ success: true });
     } catch (error) {
+      console.error('Error deleting booking:', error);
       res.status(500).json({ error: 'Failed to delete booking' });
     }
+  });
+
+  // Catch-all for unmatched API routes
+  app.all('/api/*', (req, res) => {
+    logToFile(`Unmatched API request: ${req.method} ${req.url}`);
+    res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` });
+  });
+
+  // Global error handler
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logToFile(`Unhandled error: ${err.message}\n${err.stack}`);
+    console.error('Unhandled error:', err);
+    res.status(500).json({ error: err.message || 'Internal Server Error' });
   });
 
   // Vite middleware for development

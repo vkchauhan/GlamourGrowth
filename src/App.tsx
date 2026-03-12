@@ -98,6 +98,20 @@ export default function App() {
   const [clientContext, setClientContext] = useState("");
 
   const [insights, setInsights] = useState<any>(null);
+  const [apiStatus, setApiStatus] = useState<'checking' | 'ok' | 'error'>('checking');
+
+  useEffect(() => {
+    const checkApi = async () => {
+      try {
+        const res = await fetch('/api/services');
+        if (res.ok) setApiStatus('ok');
+        else setApiStatus('error');
+      } catch (e) {
+        setApiStatus('error');
+      }
+    };
+    checkApi();
+  }, []);
   const [loadingInsights, setLoadingInsights] = useState(false);
 
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -364,6 +378,17 @@ export default function App() {
               <WifiOff className="w-4 h-4" />
             </div>
           )}
+          <div className={`p-2 rounded-full border transition-colors ${
+            apiStatus === 'ok' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 
+            apiStatus === 'error' ? 'bg-rose-50 text-rose-600 border-rose-200' : 
+            'bg-amber-50 text-amber-600 border-amber-200'
+          }`} title={apiStatus === 'ok' ? 'API Connected' : apiStatus === 'error' ? 'API Offline' : 'Connecting...'}>
+            <div className={`w-2 h-2 rounded-full ${
+              apiStatus === 'ok' ? 'bg-emerald-600 animate-pulse' : 
+              apiStatus === 'error' ? 'bg-rose-600' : 
+              'bg-amber-600 animate-bounce'
+            }`} />
+          </div>
         </div>
       </header>
 
@@ -378,19 +403,34 @@ export default function App() {
             {t.businessCoach}
           </p>
           
-          <div className="mt-8 flex bg-premium-bg border border-premium-border rounded-full p-1 w-fit">
-            <button 
-              onClick={() => setLanguage(Language.EN)}
-              className={cn("px-4 py-1.5 rounded-full text-xs font-bold transition-all", language === Language.EN ? "bg-premium-ink text-white shadow-lg" : "text-[#8E8E8E]")}
-            >
-              English
-            </button>
-            <button 
-              onClick={() => setLanguage(Language.HI)}
-              className={cn("px-4 py-1.5 rounded-full text-xs font-bold transition-all", language === Language.HI ? "bg-premium-ink text-white shadow-lg" : "text-[#8E8E8E]")}
-            >
-              Hinglish
-            </button>
+          <div className="mt-8 flex items-center gap-4">
+            <div className="flex bg-premium-bg border border-premium-border rounded-full p-1 w-fit">
+              <button 
+                onClick={() => setLanguage(Language.EN)}
+                className={cn("px-4 py-1.5 rounded-full text-xs font-bold transition-all", language === Language.EN ? "bg-premium-ink text-white shadow-lg" : "text-[#8E8E8E]")}
+              >
+                English
+              </button>
+              <button 
+                onClick={() => setLanguage(Language.HI)}
+                className={cn("px-4 py-1.5 rounded-full text-xs font-bold transition-all", language === Language.HI ? "bg-premium-ink text-white shadow-lg" : "text-[#8E8E8E]")}
+              >
+                Hinglish
+              </button>
+            </div>
+            
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-all ${
+              apiStatus === 'ok' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 
+              apiStatus === 'error' ? 'bg-rose-50 text-rose-600 border-rose-200' : 
+              'bg-amber-50 text-amber-600 border-amber-200'
+            }`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${
+                apiStatus === 'ok' ? 'bg-emerald-600 animate-pulse' : 
+                apiStatus === 'error' ? 'bg-rose-600' : 
+                'bg-amber-600 animate-bounce'
+              }`} />
+              {apiStatus === 'ok' ? 'API OK' : apiStatus === 'error' ? 'API Error' : 'API...'}
+            </div>
           </div>
         </div>
 
