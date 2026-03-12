@@ -138,8 +138,16 @@ export default function BookingForm({ onClose, onSuccess, language, translations
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to save booking');
+        const text = await response.text().catch(() => 'Could not read response body');
+        console.error('Server returned error:', response.status, text);
+        let errorMessage = 'Failed to save booking';
+        try {
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Server Error (${response.status}): ${text.slice(0, 100)}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -157,7 +165,8 @@ export default function BookingForm({ onClose, onSuccess, language, translations
       onClose();
     } catch (error) {
       console.error('Failed to save booking', error);
-      alert('Failed to save booking. Please try again.');
+      const message = error instanceof Error ? error.message : 'Failed to save booking';
+      alert(message);
     } finally {
       setIsSubmitting(false);
     }

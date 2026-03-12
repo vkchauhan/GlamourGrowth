@@ -83,8 +83,15 @@ async function startServer() {
       res.json({ success: true, booking_id: id, total_amount });
     } catch (error) {
       console.error('Error saving booking:', error);
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Internal Server Error' });
+      const message = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: message });
     }
+  });
+
+  // Global error handler
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({ error: err.message || 'Internal Server Error' });
   });
 
   app.get('/api/bookings', (req, res) => {
