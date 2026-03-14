@@ -393,7 +393,7 @@ export default function App() {
           {[
             { id: AppTab.DASHBOARD, label: t.bookings, icon: Calendar },
             { id: AppTab.STRATEGY, label: t.festivalStrategy, icon: LayoutDashboard },
-            { id: AppTab.MESSAGES, label: t.smartMessages, icon: MessageSquareText },
+            { id: AppTab.MESSAGES, label: t.messages, icon: MessageSquareText },
             { id: AppTab.INSIGHTS, label: t.growthInsights, icon: TrendingUp },
             { id: AppTab.TRY_ON, label: t.virtualTryOn, icon: Sparkles, comingSoon: true },
           ].map((item) => (
@@ -681,7 +681,7 @@ export default function App() {
                 </header>
 
                 <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm space-y-6 lg:space-y-8">
-                  <div className="space-y-2 lg:space-y-3">
+                  <div className="space-y-4 lg:space-y-6">
                     <div className="flex justify-between items-center">
                       <label className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold">{t.clientContext}</label>
                       <button 
@@ -697,6 +697,22 @@ export default function App() {
                         {isListening ? "Listening..." : "Speak Input"}
                       </button>
                     </div>
+                    
+                    <div className="space-y-3">
+                      <p className="text-[10px] text-[#8E8E8E] font-medium uppercase tracking-wider">{t.tryExamples}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {[t.example1, t.example2, t.example3].map((ex, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setClientContext(ex)}
+                            className="px-4 py-2 rounded-full bg-premium-bg border border-premium-border text-xs font-medium text-premium-ink hover:border-premium-gold hover:bg-white transition-all"
+                          >
+                            {ex}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <textarea 
                       placeholder={t.clientContextPlaceholder}
                       value={clientContext}
