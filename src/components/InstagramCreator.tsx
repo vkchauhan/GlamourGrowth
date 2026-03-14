@@ -41,7 +41,7 @@ const CONTENT_TYPES = [
   "Party Makeup",
   "Engagement Look",
   "Reception Look",
-  "Festival Makeup",
+  "Occasion Makeup",
   "Soft Glam",
   "Client Transformation",
   "Portfolio Showcase"
@@ -115,7 +115,7 @@ export default function InstagramCreator({ language }: InstagramCreatorProps) {
     "Party Makeup": t.partyMakeup,
     "Engagement Look": t.engagementLook,
     "Reception Look": t.receptionLook,
-    "Festival Makeup": t.festivalMakeup,
+    "Occasion Makeup": t.festivalMakeup,
     "Soft Glam": t.softGlam,
     "Client Transformation": t.clientTransformation,
     "Portfolio Showcase": t.portfolioShowcase,

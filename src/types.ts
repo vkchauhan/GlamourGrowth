@@ -50,7 +50,7 @@ export interface IncomeEntry {
   services?: BookingService[];
 }
 
-export const FESTIVALS = [
+export const OCCASIONS = [
   "Karwa Chauth",
   "Diwali",
   "Wedding Season (Nov-Feb)",

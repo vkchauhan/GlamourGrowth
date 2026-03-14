@@ -36,7 +36,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { AppTab, IncomeEntry, FESTIVALS, Language } from "./types";
+import { AppTab, IncomeEntry, OCCASIONS, Language } from "./types";
 import { geminiService } from "./services/geminiService";
 import { getBookings, deleteBooking } from "./services/bookingService";
 import { auth, db } from "./services/firebase";
@@ -74,9 +74,9 @@ export default function App() {
   // AI States
   const [strategy, setStrategy] = useState<any>(null);
   const [loadingStrategy, setLoadingStrategy] = useState(false);
-  const [selectedFestival, setSelectedFestival] = useState(FESTIVALS[0]);
+  const [selectedOccasion, setSelectedOccasion] = useState(OCCASIONS[0]);
 
-  const festivalTranslations: Record<string, string> = {
+  const occasionTranslations: Record<string, string> = {
     "Karwa Chauth": t.karwaChauth,
     "Diwali": t.diwali,
     "Wedding Season (Nov-Feb)": t.weddingSeason,
@@ -100,22 +100,7 @@ export default function App() {
   const [clientContext, setClientContext] = useState("");
 
   const [insights, setInsights] = useState<any>(null);
-  const [apiStatus, setApiStatus] = useState<'checking' | 'ok' | 'error'>('checking');
 
-  useEffect(() => {
-    const checkFirebase = async () => {
-      if (!user) return;
-      try {
-        // Step 8: Replace API check with Firebase connection test
-        await getDocs(collection(db, "bookings"));
-        setApiStatus('ok');
-      } catch (e) {
-        console.error("Firebase connection error", e);
-        setApiStatus('error');
-      }
-    };
-    checkFirebase();
-  }, [user]);
   const [loadingInsights, setLoadingInsights] = useState(false);
 
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -282,7 +267,7 @@ export default function App() {
   const generateStrategy = async () => {
     setLoadingStrategy(true);
     try {
-      const res = await geminiService.generateFestivalStrategy(selectedFestival, totalIncome, language);
+      const res = await geminiService.generateOccasionStrategy(selectedOccasion, totalIncome, language);
       setStrategy(res);
     } catch (e) {
       console.error(e);
@@ -372,17 +357,6 @@ export default function App() {
               <WifiOff className="w-4 h-4" />
             </div>
           )}
-          <div className={`p-2 rounded-full border transition-colors ${
-            apiStatus === 'ok' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 
-            apiStatus === 'error' ? 'bg-rose-50 text-rose-600 border-rose-200' : 
-            'bg-amber-50 text-amber-600 border-amber-200'
-          }`} title={apiStatus === 'ok' ? 'Firebase Connected' : apiStatus === 'error' ? 'Firebase Offline' : 'Connecting...'}>
-            <div className={`w-2 h-2 rounded-full ${
-              apiStatus === 'ok' ? 'bg-emerald-600 animate-pulse' : 
-              apiStatus === 'error' ? 'bg-rose-600' : 
-              'bg-amber-600 animate-bounce'
-            }`} />
-          </div>
         </div>
       </header>
 
@@ -411,19 +385,6 @@ export default function App() {
               >
                 Hinglish
               </button>
-            </div>
-            
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-all ${
-              apiStatus === 'ok' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 
-              apiStatus === 'error' ? 'bg-rose-50 text-rose-600 border-rose-200' : 
-              'bg-amber-50 text-amber-600 border-amber-200'
-            }`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${
-                apiStatus === 'ok' ? 'bg-emerald-600 animate-pulse' : 
-                apiStatus === 'error' ? 'bg-rose-600' : 
-                'bg-amber-600 animate-bounce'
-              }`} />
-              {apiStatus === 'ok' ? 'Firebase OK' : apiStatus === 'error' ? 'Firebase Error' : 'Firebase...'}
             </div>
           </div>
         </div>
@@ -635,11 +596,11 @@ export default function App() {
                     <div className="space-y-2 lg:space-y-3">
                       <label className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold">{t.selectFestival}</label>
                       <select 
-                        value={selectedFestival}
-                        onChange={(e) => setSelectedFestival(e.target.value)}
+                        value={selectedOccasion}
+                        onChange={(e) => setSelectedOccasion(e.target.value)}
                         className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none focus:ring-2 focus:ring-premium-gold/20 font-medium text-sm lg:text-base"
                       >
-                        {FESTIVALS.map(f => <option key={f} value={f}>{festivalTranslations[f] || f}</option>)}
+                        {OCCASIONS.map(o => <option key={o} value={o}>{occasionTranslations[o] || o}</option>)}
                       </select>
                     </div>
                     <div className="flex items-end">

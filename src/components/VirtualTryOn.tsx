@@ -31,7 +31,7 @@ const OCCASIONS = [
   "Party",
   "Reception",
   "Engagement",
-  "Festival Look",
+  "Occasion Look",
   "Natural Look"
 ];
 
@@ -91,7 +91,7 @@ export default function VirtualTryOn({ language }: VirtualTryOnProps) {
     "Party": t.partyOccasion,
     "Reception": t.receptionOccasion,
     "Engagement": t.engagementOccasion,
-    "Festival Look": t.festivalLook,
+    "Occasion Look": t.festivalLook,
     "Natural Look": t.naturalLook,
   };
 

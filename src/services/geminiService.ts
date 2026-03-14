@@ -91,10 +91,10 @@ export class GeminiService {
     }
   }
 
-  async generateFestivalStrategy(festival: string, currentIncome: number, language: Language = Language.EN) {
+  async generateOccasionStrategy(occasion: string, currentIncome: number, language: Language = Language.EN) {
     const response = await this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Generate a revenue strategy for ${festival}. My current monthly income is ₹${currentIncome}.`,
+      contents: `Generate a revenue strategy for ${occasion}. My current monthly income is ₹${currentIncome}.`,
       config: {
         systemInstruction: getSystemInstruction(language),
         responseMimeType: "application/json",
