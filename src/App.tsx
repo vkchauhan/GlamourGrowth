@@ -39,7 +39,7 @@ import { twMerge } from "tailwind-merge";
 import { AppTab, IncomeEntry, FESTIVALS, Language } from "./types";
 import { geminiService } from "./services/geminiService";
 import { getBookings, deleteBooking } from "./services/bookingService";
-import { db, auth } from "./firebase";
+import { auth, db } from "./services/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { pwaService } from "./services/pwaService";

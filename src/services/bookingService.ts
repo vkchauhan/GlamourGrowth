@@ -1,5 +1,5 @@
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, deleteDoc, doc, setDoc, getDoc } from "firebase/firestore";
-import { db, auth } from "../firebase";
+import { db, auth } from "./firebase";
 
 enum OperationType {
   CREATE = 'create',

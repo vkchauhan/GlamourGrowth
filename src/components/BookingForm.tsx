@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { saveBooking } from '../services/bookingService';
-import { db } from '../firebase';
+import { db } from '../services/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { Booking, Service, BookingService } from '../types';
 
