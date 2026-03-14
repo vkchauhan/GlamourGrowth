@@ -395,20 +395,30 @@ export default function App() {
             { id: AppTab.STRATEGY, label: t.festivalStrategy, icon: LayoutDashboard },
             { id: AppTab.MESSAGES, label: t.smartMessages, icon: MessageSquareText },
             { id: AppTab.INSIGHTS, label: t.growthInsights, icon: TrendingUp },
-            { id: AppTab.TRY_ON, label: t.virtualTryOn, icon: Sparkles },
+            { id: AppTab.TRY_ON, label: t.virtualTryOn, icon: Sparkles, comingSoon: true },
           ].map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as AppTab)}
+              onClick={() => !item.comingSoon && setActiveTab(item.id as AppTab)}
+              disabled={item.comingSoon}
               className={cn(
-                "w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-medium transition-all duration-300",
+                "w-full flex items-center justify-between px-5 py-4 rounded-2xl text-sm font-medium transition-all duration-300",
                 activeTab === item.id 
                   ? "bg-premium-ink text-white shadow-2xl shadow-black/10" 
-                  : "text-[#666] hover:bg-premium-bg hover:text-premium-ink"
+                  : item.comingSoon 
+                    ? "text-[#A0A0A0] cursor-not-allowed opacity-70"
+                    : "text-[#666] hover:bg-premium-bg hover:text-premium-ink"
               )}
             >
-              <item.icon className={cn("w-4 h-4", activeTab === item.id ? "text-premium-gold" : "")} />
-              {item.label}
+              <div className="flex items-center gap-4">
+                <item.icon className={cn("w-4 h-4", activeTab === item.id ? "text-premium-gold" : "")} />
+                {item.label}
+              </div>
+              {item.comingSoon && (
+                <span className="text-[8px] font-bold uppercase tracking-widest bg-premium-gold/10 text-premium-gold px-2 py-1 rounded-full border border-premium-gold/20">
+                  {t.comingSoon}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -820,18 +830,25 @@ export default function App() {
           { id: AppTab.STRATEGY, icon: LayoutDashboard, label: t.strategy },
           { id: AppTab.MESSAGES, icon: MessageSquareText, label: t.messages },
           { id: AppTab.INSIGHTS, icon: TrendingUp, label: t.insights },
-          { id: AppTab.TRY_ON, icon: Sparkles, label: t.tryOn },
+          { id: AppTab.TRY_ON, icon: Sparkles, label: t.tryOn, comingSoon: true },
         ].map((item) => (
           <button
             key={item.id}
-            onClick={() => setActiveTab(item.id as AppTab)}
+            onClick={() => !item.comingSoon && setActiveTab(item.id as AppTab)}
+            disabled={item.comingSoon}
             className={cn(
-              "flex flex-col items-center gap-1 transition-all duration-300",
-              activeTab === item.id ? "text-premium-ink scale-110" : "text-[#8E8E8E]"
+              "flex flex-col items-center gap-1 transition-all duration-300 relative",
+              activeTab === item.id ? "text-premium-ink scale-110" : "text-[#8E8E8E]",
+              item.comingSoon && "opacity-50 cursor-not-allowed"
             )}
           >
             <item.icon className={cn("w-5 h-5", activeTab === item.id ? "text-premium-gold" : "")} />
             <span className="text-[9px] font-bold uppercase tracking-widest">{item.label}</span>
+            {item.comingSoon && (
+              <span className="absolute -top-1 -right-2 text-[6px] font-black uppercase bg-premium-gold text-white px-1 rounded-sm leading-tight">
+                SOON
+              </span>
+            )}
           </button>
         ))}
       </nav>
