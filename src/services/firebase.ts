@@ -1,20 +1,8 @@
 import { initializeApp, getApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, User, Auth } from "firebase/auth";
-
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
+import firebaseConfig from "../../firebase-applet-config.json";
 
 function getFirebaseApp(): FirebaseApp {
-  if (!import.meta.env.VITE_FIREBASE_API_KEY) {
-    throw new Error("Firebase API Key is missing. Please set VITE_FIREBASE_API_KEY in your environment variables.");
-  }
-  
   if (getApps().length > 0) {
     return getApp();
   }
@@ -31,11 +19,6 @@ export const getFirebaseAuth = (): Auth => {
   }
   return authInstance;
 };
-
-// For backward compatibility if needed, but we should use getFirebaseAuth()
-// Exporting a getter-based auth object or just the function is safer.
-// However, many components might already be importing { auth }.
-// Let's use a Proxy for the 'auth' export to handle lazy initialization.
 
 export const auth = new Proxy({} as Auth, {
   get(_, prop) {

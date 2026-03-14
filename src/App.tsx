@@ -104,6 +104,7 @@ export default function App() {
 
   useEffect(() => {
     const checkFirebase = async () => {
+      if (!user) return;
       try {
         // Step 8: Replace API check with Firebase connection test
         await getDocs(collection(db, "bookings"));
@@ -114,7 +115,7 @@ export default function App() {
       }
     };
     checkFirebase();
-  }, []);
+  }, [user]);
   const [loadingInsights, setLoadingInsights] = useState(false);
 
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -191,6 +192,7 @@ export default function App() {
   // Load data from Firestore
   useEffect(() => {
     const fetchBookings = async () => {
+      if (!user) return;
       try {
         const data = await getBookings();
         // Map Firestore data to IncomeEntry format
@@ -212,7 +214,7 @@ export default function App() {
       }
     };
     fetchBookings();
-  }, []);
+  }, [user]);
 
   // Save data to localStorage
   useEffect(() => {
