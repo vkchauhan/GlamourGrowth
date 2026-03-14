@@ -15,7 +15,10 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { Service, BookingService, Booking } from '../types';
+import { saveBooking } from '../services/bookingService';
+import { db } from '../firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { Booking, Service, BookingService } from '../types';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -46,12 +49,17 @@ export default function BookingForm({ onClose, onSuccess, language, translations
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch('/api/services');
-        if (response.ok) {
-          const data = await response.json();
+        // Try to fetch from Firestore if services collection exists, 
+        // otherwise fallback to defaults as requested in Step 1
+        const querySnapshot = await getDocs(collection(db, 'services'));
+        if (!querySnapshot.empty) {
+          const data = querySnapshot.docs.map(doc => ({
+            service_id: doc.id,
+            ...doc.data()
+          })) as Service[];
           setServices(data);
         } else {
-          // Fallback to defaults if API fails
+          // Fallback to defaults
           const mockServices: Service[] = [
             { service_id: 'pedicure_id', name: 'Pedicure', default_price: 800, category: 'Nails' },
             { service_id: 'manicure_id', name: 'Manicure', default_price: 700, category: 'Nails' },
@@ -64,6 +72,16 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         }
       } catch (error) {
         console.error('Failed to fetch services', error);
+        // Fallback to defaults
+        const mockServices: Service[] = [
+          { service_id: 'pedicure_id', name: 'Pedicure', default_price: 800, category: 'Nails' },
+          { service_id: 'manicure_id', name: 'Manicure', default_price: 700, category: 'Nails' },
+          { service_id: 'waxing_id', name: 'Waxing', default_price: 1200, category: 'Hair Removal' },
+          { service_id: 'threading_id', name: 'Threading', default_price: 200, category: 'Hair Removal' },
+          { service_id: 'makeup_id', name: 'Party Makeup', default_price: 2500, category: 'Makeup' },
+          { service_id: 'bridal_makeup_id', name: 'Bridal Makeup', default_price: 15000, category: 'Makeup' },
+        ];
+        setServices(mockServices);
       } finally {
         setLoadingServices(false);
       }
@@ -124,44 +142,21 @@ export default function BookingForm({ onClose, onSuccess, language, translations
 
     setIsSubmitting(true);
     try {
-      const url = '/api/bookings';
-      console.log('BookingForm: Submitting to', window.location.origin + url);
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          client_name: formData.client_name,
-          client_phone: formData.client_phone,
-          date: formData.date,
-          services: formData.selectedServices
-        }),
+      const result = await saveBooking({
+        client_name: formData.client_name,
+        client_phone: formData.client_phone,
+        date: formData.date,
+        services: formData.selectedServices,
+        total_amount: totalAmount
       });
 
-      console.log('BookingForm: Response status', response.status);
-      if (!response.ok) {
-        const text = await response.text().catch(() => 'Could not read response body');
-        console.error('BookingForm: Server returned error:', response.status, text);
-        let errorMessage = 'Failed to save booking';
-        try {
-          const errorData = JSON.parse(text);
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          errorMessage = `Server Error (${response.status}): ${text.slice(0, 100)}`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-      
       const booking: Booking = {
         booking_id: result.booking_id,
         client_name: formData.client_name,
         client_phone: formData.client_phone,
         date: formData.date,
         services: formData.selectedServices,
-        total_amount: result.total_amount
+        total_amount: totalAmount
       };
       
       onSuccess(booking);

@@ -38,7 +38,9 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { AppTab, IncomeEntry, FESTIVALS, Language } from "./types";
 import { geminiService } from "./services/geminiService";
-import { auth } from "./services/firebase";
+import { getBookings, deleteBooking } from "./services/bookingService";
+import { db, auth } from "./firebase";
+import { collection, getDocs } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { pwaService } from "./services/pwaService";
 import en from "./locales/en.json";
@@ -101,16 +103,17 @@ export default function App() {
   const [apiStatus, setApiStatus] = useState<'checking' | 'ok' | 'error'>('checking');
 
   useEffect(() => {
-    const checkApi = async () => {
+    const checkFirebase = async () => {
       try {
-        const res = await fetch('/api/services');
-        if (res.ok) setApiStatus('ok');
-        else setApiStatus('error');
+        // Step 8: Replace API check with Firebase connection test
+        await getDocs(collection(db, "bookings"));
+        setApiStatus('ok');
       } catch (e) {
+        console.error("Firebase connection error", e);
         setApiStatus('error');
       }
     };
-    checkApi();
+    checkFirebase();
   }, []);
   const [loadingInsights, setLoadingInsights] = useState(false);
 
@@ -185,32 +188,23 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Load data from API
+  // Load data from Firestore
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const response = await fetch('/api/bookings');
-        if (response.ok) {
-          const data = await response.json();
-          // Map API response to IncomeEntry format
-          const mapped: IncomeEntry[] = data.map((b: any) => ({
-            id: b.booking_id,
-            date: b.booking_date,
-            amount: b.total_amount,
-            category: b.services?.[0]?.name || "General",
-            clientName: b.client_name,
-            services: b.services
-          }));
-          setIncomeEntries(mapped);
-        } else {
-          // Fallback to localStorage if API fails
-          const saved = localStorage.getItem("glamour_growth_income");
-          if (saved) {
-            setIncomeEntries(JSON.parse(saved));
-          }
-        }
+        const data = await getBookings();
+        // Map Firestore data to IncomeEntry format
+        const mapped: IncomeEntry[] = data.map((b: any) => ({
+          id: b.booking_id,
+          date: b.date,
+          amount: b.price,
+          category: b.services?.[0]?.name || "General",
+          clientName: b.name,
+          services: b.services
+        }));
+        setIncomeEntries(mapped);
       } catch (e) {
-        console.error("Failed to fetch bookings", e);
+        console.error("Failed to fetch bookings from Firestore", e);
         const saved = localStorage.getItem("glamour_growth_income");
         if (saved) {
           setIncomeEntries(JSON.parse(saved));
@@ -266,13 +260,11 @@ export default function App() {
 
   const deleteEntry = async (id: string) => {
     try {
-      const response = await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
-      if (response.ok) {
-        setIncomeEntries(incomeEntries.filter(e => e.id !== id));
-      }
+      await deleteBooking(id);
+      setIncomeEntries(incomeEntries.filter(e => e.id !== id));
     } catch (e) {
-      console.error("Failed to delete booking", e);
-      // Fallback to local delete if API fails
+      console.error("Failed to delete booking from Firestore", e);
+      // Fallback to local delete if Firestore fails
       setIncomeEntries(incomeEntries.filter(e => e.id !== id));
     }
   };
@@ -382,7 +374,7 @@ export default function App() {
             apiStatus === 'ok' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 
             apiStatus === 'error' ? 'bg-rose-50 text-rose-600 border-rose-200' : 
             'bg-amber-50 text-amber-600 border-amber-200'
-          }`} title={apiStatus === 'ok' ? 'API Connected' : apiStatus === 'error' ? 'API Offline' : 'Connecting...'}>
+          }`} title={apiStatus === 'ok' ? 'Firebase Connected' : apiStatus === 'error' ? 'Firebase Offline' : 'Connecting...'}>
             <div className={`w-2 h-2 rounded-full ${
               apiStatus === 'ok' ? 'bg-emerald-600 animate-pulse' : 
               apiStatus === 'error' ? 'bg-rose-600' : 
@@ -429,7 +421,7 @@ export default function App() {
                 apiStatus === 'error' ? 'bg-rose-600' : 
                 'bg-amber-600 animate-bounce'
               }`} />
-              {apiStatus === 'ok' ? 'API OK' : apiStatus === 'error' ? 'API Error' : 'API...'}
+              {apiStatus === 'ok' ? 'Firebase OK' : apiStatus === 'error' ? 'Firebase Error' : 'Firebase...'}
             </div>
           </div>
         </div>

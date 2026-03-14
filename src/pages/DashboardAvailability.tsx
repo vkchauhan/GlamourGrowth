@@ -12,6 +12,8 @@ const DAYS = [
   'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 ];
 
+import { saveAvailability, getAvailability } from '../services/bookingService';
+
 const DashboardAvailability: React.FC = () => {
   const [availability, setAvailability] = useState<AvailabilityItem[]>(
     DAYS.map((_, i) => ({
@@ -23,8 +25,33 @@ const DashboardAvailability: React.FC = () => {
   );
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
-  const artistId = 'priya-makeup'; // Hardcoded for MVP
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      try {
+        const data = await getAvailability();
+        if (data) {
+          // Merge with default to ensure all days are present
+          const merged = DAYS.map((_, i) => {
+            const found = data.find((a: any) => a.day_of_week === i);
+            return found || {
+              day_of_week: i,
+              start_time: '10:00',
+              end_time: '18:00',
+              enabled: false
+            };
+          });
+          setAvailability(merged);
+        }
+      } catch (error) {
+        console.error('Error fetching availability:', error);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    fetchAvailability();
+  }, []);
 
   const handleSave = async () => {
     setLoading(true);
@@ -36,22 +63,23 @@ const DashboardAvailability: React.FC = () => {
           day_of_week, start_time, end_time
         }));
 
-      const response = await fetch('/api/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ artist_id: artistId, availability: payload }),
-      });
-
-      if (response.ok) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
-      }
+      await saveAvailability(payload);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
     } catch (error) {
       console.error('Error saving availability:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  if (initialLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="animate-spin text-indigo-600" size={48} />
+      </div>
+    );
+  }
 
   const updateDay = (index: number, updates: Partial<AvailabilityItem>) => {
     const newAvail = [...availability];

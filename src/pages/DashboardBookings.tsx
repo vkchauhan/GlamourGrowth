@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, User, Phone, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 
+import { getBookings } from '../services/bookingService';
+
 interface Booking {
   booking_id: string;
   client_name: string;
@@ -19,17 +21,26 @@ const DashboardBookings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const artistId = 'priya-makeup'; // Hardcoded for MVP
-
   useEffect(() => {
     fetchBookings();
   }, []);
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch(`/api/bookings?artist_id=${artistId}`);
-      const data = await response.json();
-      setBookings(data.bookings);
+      const data = await getBookings();
+      // Map Firestore data to Booking format
+      const mapped: Booking[] = data.map((b: any) => ({
+        booking_id: b.booking_id,
+        client_name: b.name || b.client_name,
+        client_phone: b.phone || b.client_phone,
+        booking_date: b.date,
+        booking_time: b.booking_time || "10:00", // Default if missing
+        service_name: b.services?.[0]?.name || "General Service",
+        duration_minutes: b.duration_minutes || 60,
+        price: b.price,
+        status: b.status || "confirmed"
+      }));
+      setBookings(mapped);
     } catch (error) {
       console.error('Error fetching bookings:', error);
     } finally {

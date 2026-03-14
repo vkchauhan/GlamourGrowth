@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "Booking": {
+      "title": "Booking",
+      "description": "A client booking for makeup services",
+      "type": "object",
+      "properties": {
+        "booking_id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "booking_time": { "type": "string" },
+        "price": { "type": "number" },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "service_id": { "type": "string" },
+              "name": { "type": "string" },
+              "price": { "type": "number" }
+            }
+          }
+        },
+        "status": { "type": "string", "enum": ["confirmed", "pending", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "date", "price"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "A makeup service offered by the artist",
+      "type": "object",
+      "properties": {
+        "service_id": { "type": "string" },
+        "service_name": { "type": "string" },
+        "duration_minutes": { "type": "number" },
+        "price": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["service_name", "price"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Artist settings like availability",
+      "type": "object",
+      "properties": {
+        "availability": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "day_of_week": { "type": "integer" },
+              "start_time": { "type": "string" },
+              "end_time": { "type": "string" }
+            }
+          }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "bookings": {
+      "schema": "Booking",
+      "description": "Collection of client bookings"
+    },
+    "services": {
+      "schema": "Service",
+      "description": "Collection of services offered"
+    },
+    "settings/availability": {
+      "schema": "Settings",
+      "description": "Artist availability settings"
+    }
+  }
+}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Loader2 } from 'lucide-react';
 
+import { getServices, saveService } from '../services/bookingService';
+
 interface Service {
   service_id: string;
   service_name: string;
@@ -18,17 +20,14 @@ const DashboardServices: React.FC = () => {
     price: 0,
   });
 
-  const artistId = 'priya-makeup'; // Hardcoded for MVP
-
   useEffect(() => {
     fetchServices();
   }, []);
 
   const fetchServices = async () => {
     try {
-      const response = await fetch(`/api/artist/${artistId}`);
-      const data = await response.json();
-      setServices(data.services);
+      const data = await getServices();
+      setServices(data as Service[]);
     } catch (error) {
       console.error('Error fetching services:', error);
     } finally {
@@ -39,16 +38,10 @@ const DashboardServices: React.FC = () => {
   const handleAddService = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...newService, artist_id: artistId }),
-      });
-      if (response.ok) {
-        fetchServices();
-        setIsAdding(false);
-        setNewService({ service_name: '', duration_minutes: 60, price: 0 });
-      }
+      await saveService(newService);
+      fetchServices();
+      setIsAdding(false);
+      setNewService({ service_name: '', duration_minutes: 60, price: 0 });
     } catch (error) {
       console.error('Error adding service:', error);
     }
