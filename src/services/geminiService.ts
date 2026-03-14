@@ -91,7 +91,7 @@ export class GeminiService {
     }
   }
 
-  async generateOccasionStrategy(occasion: string, currentIncome: number, language: Language = Language.EN) {
+  async generateOccasionStrategy(occasion: string, currentIncome: number, language: Language = Language.HI) {
     const response = await this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Generate a revenue strategy for ${occasion}. My current monthly income is ₹${currentIncome}.`,
@@ -105,7 +105,7 @@ export class GeminiService {
     return JSON.parse(response.text || "{}");
   }
 
-  async generateFollowUpMessages(clientContext: string, language: Language = Language.EN) {
+  async generateFollowUpMessages(clientContext: string, language: Language = Language.HI) {
     const response = await this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Generate 3 smart follow-up messages for this client context: ${clientContext}. Focus on conversion and Indian pricing psychology.`,
@@ -119,7 +119,7 @@ export class GeminiService {
     return JSON.parse(response.text || "{}");
   }
 
-  async generateBusinessInsights(incomeData: any[], language: Language = Language.EN) {
+  async generateBusinessInsights(incomeData: any[], language: Language = Language.HI) {
     const response = await this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Analyze this income data and provide growth insights: ${JSON.stringify(incomeData)}. Focus on Indian market trends and revenue maximization.`,
@@ -133,7 +133,7 @@ export class GeminiService {
     return JSON.parse(response.text || "{}");
   }
 
-  async generateInstagramPost(contentType: string, topic: string, language: Language = Language.EN) {
+  async generateInstagramPost(contentType: string, topic: string, language: Language = Language.HI) {
     const response = await this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Generate Instagram content for a ${contentType} about ${topic}. Focus on Indian makeup artist context and client attraction.`,

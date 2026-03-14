@@ -65,7 +65,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.DASHBOARD);
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem("glamour_growth_lang");
-    return (saved as Language) || Language.EN;
+    return (saved as Language) || Language.HI;
   });
   const t = translations[language];
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([]);
