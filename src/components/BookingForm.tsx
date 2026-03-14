@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Plus, 
   Trash2, 
@@ -36,6 +36,22 @@ export default function BookingForm({ onClose, onSuccess, language, translations
   const [loadingServices, setLoadingServices] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
   
   const [formData, setFormData] = useState({
     client_name: '',
@@ -241,7 +257,7 @@ export default function BookingForm({ onClose, onSuccess, language, translations
             </div>
 
             {/* Service Multi-select */}
-            <div className="space-y-2 lg:space-y-3 relative">
+            <div className="space-y-2 lg:space-y-3 relative" ref={dropdownRef}>
               <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold">{t.selectServices || "Select Services"}</label>
               <div className="relative">
                 <div 
@@ -280,6 +296,11 @@ export default function BookingForm({ onClose, onSuccess, language, translations
                           placeholder={t.searchServices || "Search services..."}
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              setIsDropdownOpen(false);
+                            }
+                          }}
                           className="w-full p-3 rounded-xl bg-premium-bg focus:outline-none text-sm"
                           onClick={(e) => e.stopPropagation()}
                         />
@@ -328,6 +349,14 @@ export default function BookingForm({ onClose, onSuccess, language, translations
                             No services found
                           </div>
                         )}
+                      </div>
+                      <div className="p-2 border-t border-premium-border bg-premium-bg/30">
+                        <button 
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="w-full py-2 bg-premium-ink text-white text-xs font-bold rounded-xl hover:bg-[#333] transition-colors"
+                        >
+                          {t.done || "Done"}
+                        </button>
                       </div>
                     </motion.div>
                   )}
