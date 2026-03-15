@@ -31,6 +31,8 @@ interface BookingFormProps {
   translations: any;
 }
 
+const LAST_PRICES_KEY = 'glamour_growth_service_prices';
+
 export default function BookingForm({ onClose, onSuccess, language, translations: t }: BookingFormProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
@@ -122,12 +124,20 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         selectedServices: formData.selectedServices.filter(s => s.service_id !== service.service_id)
       });
     } else {
+      // Get last used price from localStorage or fallback to default
+      const savedPrices = localStorage.getItem(LAST_PRICES_KEY);
+      let price = service.default_price;
+      if (savedPrices) {
+        const prices = JSON.parse(savedPrices);
+        price = prices[service.service_id] ?? service.default_price;
+      }
+
       setFormData({
         ...formData,
         selectedServices: [...formData.selectedServices, {
           service_id: service.service_id,
           name: service.name,
-          price: service.default_price
+          price: price
         }]
       });
     }
@@ -175,6 +185,14 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         total_amount: totalAmount
       };
       
+      // Save last used prices to localStorage
+      const savedPricesRaw = localStorage.getItem(LAST_PRICES_KEY);
+      const prices = savedPricesRaw ? JSON.parse(savedPricesRaw) : {};
+      formData.selectedServices.forEach(s => {
+        prices[s.service_id] = s.price;
+      });
+      localStorage.setItem(LAST_PRICES_KEY, JSON.stringify(prices));
+
       onSuccess(booking);
       onClose();
     } catch (error) {
