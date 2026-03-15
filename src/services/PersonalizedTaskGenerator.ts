@@ -10,9 +10,9 @@ export class PersonalizedTaskGenerator {
       return {
         task_id: "insight_no_bookings_7d",
         title_en: "Promote your services",
-        title_hi: "अपनी सेवाओं को प्रमोट करें",
+        title_hi: "Apni services promote karein",
         body_en: "Promote your makeup services today by posting a bridal look on Instagram.",
-        body_hi: "आज इंस्टाग्राम पर ब्राइडल मेकअप पोस्ट करें और नए क्लाइंट आकर्षित करें।",
+        body_hi: "Aaj Instagram par bridal makeup post karein aur naye clients attract karein.",
         trigger_type: "booking_insight",
         trigger_condition: "no_recent_bookings",
         points: 10
@@ -24,9 +24,9 @@ export class PersonalizedTaskGenerator {
       return {
         task_id: "insight_many_bookings_30d",
         title_en: "Showcase your work",
-        title_hi: "अपना काम दिखाएं",
+        title_hi: "Apna kaam dikhayein",
         body_en: "You had many clients recently. Post a transformation reel to showcase your work.",
-        body_hi: "हाल ही में आपके कई क्लाइंट रहे हैं। अपने काम का ट्रांसफॉर्मेशन रील पोस्ट करें।",
+        body_hi: "Haal hi mein aapke kai clients rahe hain. Apne kaam ka transformation reel post karein.",
         trigger_type: "booking_insight",
         trigger_condition: "high_activity",
         points: 10
@@ -40,9 +40,9 @@ export class PersonalizedTaskGenerator {
         return {
           task_id: "insight_last_booking_yesterday",
           title_en: "Ask for a review",
-          title_hi: "रिव्यू मांगें",
+          title_hi: "Review maangein",
           body_en: "Ask yesterday’s client for a review to build trust with new customers.",
-          body_hi: "कल के क्लाइंट से रिव्यू मांगें ताकि नए क्लाइंट का भरोसा बढ़े।",
+          body_hi: "Kal ke client se review maangein taaki naye clients ka bharosa badhe.",
           trigger_type: "booking_insight",
           trigger_condition: "last_booking_yesterday",
           points: 10
@@ -55,9 +55,9 @@ export class PersonalizedTaskGenerator {
       return {
         task_id: "insight_bridal_focus",
         title_en: "Bridal Promotion",
-        title_hi: "ब्राइडल प्रमोशन",
+        title_hi: "Bridal Promotion",
         body_en: "Promote your bridal package today to attract wedding clients.",
-        body_hi: "आज अपने ब्राइडल पैकेज को प्रमोट करें ताकि शादी के क्लाइंट मिल सकें।",
+        body_hi: "Aaj apne bridal package ko promote karein taaki shaadi ke clients mil sakein.",
         trigger_type: "booking_insight",
         trigger_condition: "bridal_focus",
         points: 10
@@ -69,9 +69,9 @@ export class PersonalizedTaskGenerator {
       return {
         task_id: "insight_loyalty",
         title_en: "Loyalty Offer",
-        title_hi: "लॉयल्टी ऑफर",
+        title_hi: "Loyalty Offer",
         body_en: "Send a loyalty offer to your repeat clients.",
-        body_hi: "अपने पुराने क्लाइंट को लॉयल्टी ऑफर भेजें।",
+        body_hi: "Apne purane clients ko loyalty offer bhejein.",
         trigger_type: "booking_insight",
         trigger_condition: "repeat_clients",
         points: 10
@@ -88,9 +88,9 @@ export class PersonalizedTaskGenerator {
     return {
       task_id: "generic_fallback",
       title_en: "Update your portfolio",
-      title_hi: "अपना पोर्टफोलियो अपडेट करें",
+      title_hi: "Apna portfolio update karein",
       body_en: "Add your latest work to your portfolio to attract more clients.",
-      body_hi: "अधिक क्लाइंट्स को आकर्षित करने के लिए अपने पोर्टफोलियो में अपना नवीनतम काम जोड़ें।",
+      body_hi: "Zyada clients ko attract karne ke liye apne portfolio mein apna latest kaam jodein.",
       trigger_type: "generic",
       points: 10
     };

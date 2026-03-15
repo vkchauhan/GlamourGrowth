@@ -341,7 +341,7 @@ export default function App() {
               onClick={() => setLanguage(Language.HI)}
               className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold transition-all", language === Language.HI ? "bg-premium-ink text-white" : "text-[#8E8E8E]")}
             >
-              HI
+              HG
             </button>
           </div>
           <div className="bg-white px-3 py-1.5 rounded-full border border-premium-border shadow-sm flex items-center gap-1">

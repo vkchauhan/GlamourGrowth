@@ -147,8 +147,10 @@ export interface UserDailyTask {
   id: string;
   user_id: string;
   task_id: string;
-  title: string;
-  body: string;
+  title_en: string;
+  title_hi: string;
+  body_en: string;
+  body_hi: string;
   status: 'pending' | 'completed';
   points: number;
   date: string;

@@ -53,8 +53,10 @@ export class NotificationScheduler {
       const userTask: Partial<UserDailyTask> = {
         user_id: user.uid,
         task_id: taskData.task_id,
-        title: taskData.title_en, // Default to English, UI will handle localization if needed or we store both
-        body: taskData.body_en,
+        title_en: taskData.title_en,
+        title_hi: taskData.title_hi,
+        body_en: taskData.body_en,
+        body_hi: taskData.body_hi,
         status: 'pending',
         points: taskData.points || 10,
         date: today,

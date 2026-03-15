@@ -21,8 +21,10 @@ async function startServer() {
     // In a real app, this would fetch from Firestore using firebase-admin
     res.json({ 
       task_id: "api_mock_task",
-      title: "Check your insights",
-      body: "Review your business performance for the last 30 days.",
+      title_en: "Check your insights",
+      title_hi: "Apne insights check karein",
+      body_en: "Review your business performance for the last 30 days.",
+      body_hi: "Pichle 30 dino ki business performance check karein.",
       status: "pending",
       points: 10
     });

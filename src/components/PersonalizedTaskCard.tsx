@@ -32,7 +32,7 @@ export default function PersonalizedTaskCard({ task, onComplete, language, trans
               {t.dailyGrowthTask}
             </h4>
             <p className="text-xl font-serif font-medium italic mt-0.5">
-              {task.title}
+              {language === 'hi' ? task.title_hi : task.title_en}
             </p>
           </div>
         </div>
@@ -45,7 +45,7 @@ export default function PersonalizedTaskCard({ task, onComplete, language, trans
       </div>
 
       <p className="text-[#666] text-lg font-light italic mb-8 leading-relaxed">
-        "{task.body}"
+        "{language === 'hi' ? task.body_hi : task.body_en}"
       </p>
 
       <div className="flex items-center justify-between pt-6 border-t border-premium-border">
