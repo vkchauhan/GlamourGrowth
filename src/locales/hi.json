@@ -152,5 +152,15 @@
   "festivalLook": "Occasion Look",
   "naturalLook": "Natural Look",
   "comingSoon": "Jald Aa Raha Hai",
-  "done": "Ho Gaya"
+  "done": "Ho Gaya",
+  "dailyGrowthTask": "दैनिक विकास कार्य",
+  "markComplete": "पूरा हुआ मार्क करें",
+  "businessInsight": "बिज़नेस इनसाइट",
+  "growthPoints": "ग्रोथ पॉइंट्स",
+  "taskCompleted": "कार्य पूरा हुआ! +10 पॉइंट्स मिले।",
+  "noTaskToday": "आपने आज का कार्य पूरा कर लिया है! कल फिर देखें।",
+  "bookingsInsight": "इस महीने आपकी {{count}} बुकिंग थीं। {{action}}",
+  "noRecentBookingsInsight": "इस महीने कोई बुकिंग नहीं है। अपनी सेवाओं का प्रचार करने का प्रयास करें!",
+  "promoteBridalAction": "अधिक ग्राहक पाने के लिए अपनी ब्राइडल सेवाओं का प्रचार करें।",
+  "promoteServicesAction": "नए ग्राहकों को आकर्षित करने के लिए सोशल मीडिया पर अपना काम साझा करें।"
 }

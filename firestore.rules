@@ -65,5 +65,22 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAuthenticated();
     }
+
+    // Daily Growth Tasks: Read-only for authenticated users
+    match /daily_growth_tasks/{taskId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only manageable via console/admin
+    }
+
+    // User Daily Tasks: Only owner can read/write
+    match /user_daily_tasks/{taskId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == resource.data.user_id;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.user_id;
+    }
+
+    // Analytics Events: Only owner can write, only owner can read
+    match /analytics_events/{eventId} {
+      allow read, create: if isAuthenticated() && (request.auth.uid == resource.data.user_id || request.auth.uid == request.resource.data.user_id);
+    }
   }
 }

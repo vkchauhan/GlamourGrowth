@@ -10,6 +10,7 @@ export enum AppTab {
   STRATEGY = "strategy",
   MESSAGES = "messages",
   INSIGHTS = "insights",
+  GROWTH = "growth",
   TRY_ON = "try_on",
 }
 
@@ -120,3 +121,45 @@ export const INSTAGRAM_SCHEMA = {
   },
   required: ["caption", "hashtags", "reelScript", "storyText", "cta"],
 };
+
+export interface BookingInsights {
+  bookings_last_7_days: number;
+  bookings_last_30_days: number;
+  last_booking_date: string | null;
+  most_common_service: string | null;
+  repeat_clients_count: number;
+  bridal_bookings_last_30_days: number;
+  party_makeup_last_30_days: number;
+}
+
+export interface DailyGrowthTask {
+  task_id: string;
+  title_en: string;
+  title_hi: string;
+  body_en: string;
+  body_hi: string;
+  trigger_type: 'booking_insight' | 'generic';
+  trigger_condition?: string;
+  points: number;
+}
+
+export interface UserDailyTask {
+  id: string;
+  user_id: string;
+  task_id: string;
+  title: string;
+  body: string;
+  status: 'pending' | 'completed';
+  points: number;
+  date: string;
+  createdAt: any;
+}
+
+export interface AnalyticsEvent {
+  id?: string;
+  user_id: string;
+  event_type: string;
+  task_id?: string;
+  metadata?: any;
+  createdAt: any;
+}

@@ -152,5 +152,15 @@
   "festivalLook": "Occasion Look",
   "naturalLook": "Natural Look",
   "comingSoon": "Coming Soon",
-  "done": "Done"
+  "done": "Done",
+  "dailyGrowthTask": "Daily Growth Task",
+  "markComplete": "Mark Complete",
+  "businessInsight": "Business Insight",
+  "growthPoints": "Growth Points",
+  "taskCompleted": "Task Completed! +10 points awarded.",
+  "noTaskToday": "You've completed your task for today! Check back tomorrow.",
+  "bookingsInsight": "You had {{count}} bookings this month. {{action}}",
+  "noRecentBookingsInsight": "No bookings this month. Try promoting your services!",
+  "promoteBridalAction": "Promote your bridal services to get more clients.",
+  "promoteServicesAction": "Share your work on social media to attract new clients."
 }

@@ -48,7 +48,9 @@ import hi from "./locales/hi.json";
 import Login from "./components/Login";
 import VirtualTryOn from "./components/VirtualTryOn";
 import BookingForm from "./components/BookingForm";
-import { Booking } from "./types";
+import DailyGrowthScreen from "./pages/DailyGrowthScreen";
+import { Booking, BookingInsights } from "./types";
+import { BookingInsightsService } from "./services/BookingInsightsService";
 
 const translations = {
   [Language.EN]: en,
@@ -394,6 +396,7 @@ export default function App() {
             { id: AppTab.DASHBOARD, label: t.bookings, icon: Calendar },
             { id: AppTab.STRATEGY, label: t.festivalStrategy, icon: LayoutDashboard },
             { id: AppTab.MESSAGES, label: t.messages, icon: MessageSquareText },
+            { id: AppTab.GROWTH, label: t.dailyGrowthTask, icon: Sparkles },
             { id: AppTab.INSIGHTS, label: t.growthInsights, icon: TrendingUp },
             { id: AppTab.TRY_ON, label: t.virtualTryOn, icon: Sparkles, comingSoon: true },
           ].map((item) => (
@@ -486,8 +489,29 @@ export default function App() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
                   <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm hover:shadow-md transition-shadow">
-                    <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.totalBookings}</p>
-                    <p className="text-3xl lg:text-5xl font-serif font-medium">{incomeEntries.length}</p>
+                    <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.businessInsight}</p>
+                    <p className="text-sm lg:text-base font-light italic text-[#666]">
+                      {(() => {
+                        const insights = BookingInsightsService.analyze(incomeEntries.map(e => ({
+                          booking_id: e.id,
+                          client_name: e.clientName,
+                          date: e.date,
+                          total_amount: e.amount,
+                          services: e.services || []
+                        } as Booking)));
+                        
+                        if (insights.bookings_last_30_days === 0) return t.noRecentBookingsInsight || "No bookings this month. Try promoting your services!";
+                        
+                        let action = "";
+                        if (insights.most_common_service?.toLowerCase().includes("bridal")) {
+                          action = t.promoteBridalAction || "Promote your bridal services to get more clients.";
+                        } else {
+                          action = t.promoteServicesAction || "Share your work on social media to attract new clients.";
+                        }
+
+                        return t.bookingsInsight.replace("{{count}}", insights.bookings_last_30_days.toString()).replace("{{action}}", action);
+                      })()}
+                    </p>
                   </div>
                   <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm hover:shadow-md transition-shadow">
                     <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.avgTicketSize}</p>
@@ -754,6 +778,17 @@ export default function App() {
                     </motion.div>
                   ))}
                 </div>
+              </motion.div>
+            )}
+
+            {activeTab === AppTab.GROWTH && (
+              <motion.div
+                key="growth"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <DailyGrowthScreen language={language} translations={t} />
               </motion.div>
             )}
 

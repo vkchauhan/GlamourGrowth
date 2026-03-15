@@ -11,6 +11,12 @@ import { Language } from "../types";
 import en from "../locales/en.json";
 import hi from "../locales/hi.json";
 
+declare global {
+  interface Window {
+    recaptchaVerifier: any;
+  }
+}
+
 const translations = {
   [Language.EN]: en,
   [Language.HI]: hi,
@@ -33,7 +39,7 @@ export default function Login({ language, setLanguage, onLoginSuccess }: LoginPr
 
   const recaptchaRef = useRef<any>(null);
 
-  const initRecaptcha = async () => {
+  const initRecaptcha = async (retryCount = 0) => {
     try {
       if (!recaptchaRef.current) {
         const container = document.getElementById('recaptcha-container');
@@ -42,6 +48,13 @@ export default function Login({ language, setLanguage, onLoginSuccess }: LoginPr
           return;
         }
         
+        // Clear any existing instance
+        if (window.recaptchaVerifier) {
+          try {
+            window.recaptchaVerifier.clear();
+          } catch (e) {}
+        }
+
         recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
           'size': 'invisible',
           'callback': () => {
@@ -52,11 +65,23 @@ export default function Login({ language, setLanguage, onLoginSuccess }: LoginPr
           }
         });
         
+        window.recaptchaVerifier = recaptchaRef.current;
         await recaptchaRef.current.render();
       }
     } catch (err: any) {
       console.error("reCAPTCHA init error:", err);
-      setError("Security check failed to load. This is often caused by ad-blockers or network restrictions. Please disable any ad-blockers and try again.");
+      
+      if (err.code === 'auth/network-request-failed' && retryCount < 2) {
+        console.log(`Retrying reCAPTCHA init... (${retryCount + 1})`);
+        setTimeout(() => initRecaptcha(retryCount + 1), 1000);
+        return;
+      }
+
+      let msg = "Security check failed to load. This is often caused by ad-blockers, VPNs, or network restrictions.";
+      if (err.code === 'auth/network-request-failed') {
+        msg = "Network error: Could not connect to Google Security services. Please check your internet connection and disable any ad-blockers.";
+      }
+      setError(msg);
     }
   };
 
@@ -96,24 +121,27 @@ export default function Login({ language, setLanguage, onLoginSuccess }: LoginPr
     } catch (err: any) {
       console.error("Error sending OTP", err);
       
-      let errorMessage = err.message || "Failed to send OTP. Please check your network.";
+      let errorMessage = err.message || "Failed to send OTP. Please try again.";
       
       if (err.code === 'auth/billing-not-enabled') {
         errorMessage = "Billing not enabled: Please go to Firebase Console and link a billing account (Blaze Plan) to use Phone Authentication.";
-      } else if (err.code === 'auth/captcha-check-failed') {
+      } else if (err.code === 'auth/captcha-check-failed' || err.code === 'auth/unauthorized-domain') {
         errorMessage = "Domain not authorized: Please add this app's domain to 'Authorized Domains' in your Firebase Authentication settings.";
-      } else if (err.code === 'auth/network-request-failed' || errorMessage.includes('network')) {
-        errorMessage = "Network error: Please check your internet connection or disable ad-blockers/VPNs that might be blocking Google services.";
+      } else if (err.code === 'auth/network-request-failed' || errorMessage.toLowerCase().includes('network')) {
+        errorMessage = "Network error: Could not connect to Google Security services. Please check your internet connection and disable any ad-blockers.";
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = "Too many attempts. Please try again later.";
+      } else if (err.code === 'auth/invalid-phone-number') {
+        errorMessage = "Invalid phone number format. Please include country code if not +91.";
       }
       
       setError(errorMessage);
       
-      // Reset reCAPTCHA on error
+      // Reset reCAPTCHA on error to allow retry
       if (recaptchaRef.current) {
         try {
           recaptchaRef.current.clear();
           recaptchaRef.current = null;
-          // Trigger re-init
           initRecaptcha();
         } catch (e) {
           console.error("Error resetting reCAPTCHA:", e);

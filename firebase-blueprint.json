@@ -58,6 +58,54 @@
         },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "DailyGrowthTask": {
+      "title": "DailyGrowthTask",
+      "description": "A task for the artist to grow their business",
+      "type": "object",
+      "properties": {
+        "task_id": { "type": "string" },
+        "title_en": { "type": "string" },
+        "title_hi": { "type": "string" },
+        "body_en": { "type": "string" },
+        "body_hi": { "type": "string" },
+        "trigger_type": { "type": "string", "enum": ["booking_insight", "generic"] },
+        "trigger_condition": { "type": "string" },
+        "points": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title_en", "body_en"]
+    },
+    "UserDailyTask": {
+      "title": "UserDailyTask",
+      "description": "A task assigned to a specific user for a specific day",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "task_id": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed"] },
+        "points": { "type": "number" },
+        "date": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_id", "task_id", "status", "date"]
+    },
+    "AnalyticsEvent": {
+      "title": "AnalyticsEvent",
+      "description": "An event logged for analytics purposes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "event_type": { "type": "string" },
+        "task_id": { "type": "string" },
+        "metadata": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_id", "event_type", "createdAt"]
     }
   },
   "firestore": {
@@ -72,6 +120,18 @@
     "settings/availability": {
       "schema": "Settings",
       "description": "Artist availability settings"
+    },
+    "daily_growth_tasks": {
+      "schema": "DailyGrowthTask",
+      "description": "Master list of growth tasks"
+    },
+    "user_daily_tasks": {
+      "schema": "UserDailyTask",
+      "description": "Tasks assigned to users"
+    },
+    "analytics_events": {
+      "schema": "AnalyticsEvent",
+      "description": "Logs of user activity and system events"
     }
   }
 }
