@@ -1,13 +1,13 @@
-const CACHE_NAME = 'glamour-growth-v4';
+const CACHE_NAME = 'glamour-growth-v6';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
   '/favicon.ico',
   '/apple-touch-icon.png',
-  '/icons/icon-192.png',
-  '/icons/icon-256.png',
-  '/icons/icon-512.png'
+  '/icons/icon-192-v2.png',
+  '/icons/icon-256-v2.png',
+  '/icons/icon-512-v2.png'
 ];
 
 // Install event - caching core assets

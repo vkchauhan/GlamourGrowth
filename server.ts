@@ -14,13 +14,15 @@ async function startServer() {
 
   // Serve static files from 'dist' in production, or 'public' in development
   const isProd = process.env.NODE_ENV === "production";
-  const distPath = path.join(__dirname, 'dist');
-  const publicPath = path.join(__dirname, 'public');
+  const root = process.cwd();
+  const distPath = path.join(root, 'dist');
+  const publicPath = path.join(root, 'public');
 
   if (isProd) {
     app.use(express.static(distPath));
+    // Fallback to public folder if not found in dist (useful for dynamically generated assets)
+    app.use(express.static(publicPath));
   } else {
-    // In dev, Vite handles most things, but we can serve public assets explicitly
     app.use(express.static(publicPath));
   }
 
@@ -58,8 +60,9 @@ async function startServer() {
     app.get('*', (req, res) => {
       // SPA Fallback: Only serve index.html for non-file requests
       // This prevents returning HTML for missing images/icons
-      if (req.path.includes('.') && !req.path.endsWith('.html')) {
-        return res.status(404).send('Not found');
+      const ext = path.extname(req.path).toLowerCase();
+      if (ext && ext !== '.html') {
+        return res.status(404).send(`File not found: ${req.path}`);
       }
       res.sendFile(path.join(distPath, 'index.html'));
     });
