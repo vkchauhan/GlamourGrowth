@@ -1,13 +1,13 @@
-const CACHE_NAME = 'glamour-growth-v6';
+const CACHE_NAME = 'glamour-growth-v7';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
   '/favicon.ico',
   '/apple-touch-icon.png',
-  '/icons/icon-192-v2.png',
-  '/icons/icon-256-v2.png',
-  '/icons/icon-512-v2.png'
+  '/icons/icon-192.png',
+  '/icons/icon-256.png',
+  '/icons/icon-512.png'
 ];
 
 // Install event - caching core assets
@@ -52,8 +52,18 @@ self.addEventListener('fetch', (event) => {
       caches.open(CACHE_NAME).then((cache) => {
         return cache.match(request).then((cachedResponse) => {
           const fetchedResponse = fetch(request).then((networkResponse) => {
-            cache.put(request, networkResponse.clone());
+            // Only cache successful responses of the right type
+            if (networkResponse.ok && networkResponse.status === 200) {
+              const contentType = networkResponse.headers.get('content-type');
+              if (request.destination === 'image' && contentType && !contentType.includes('image')) {
+                // Don't cache if we expected an image but got something else (like HTML)
+                return networkResponse;
+              }
+              cache.put(request, networkResponse.clone());
+            }
             return networkResponse;
+          }).catch(() => {
+            // If fetch fails, we just return whatever we have (or nothing)
           });
           return cachedResponse || fetchedResponse;
         });

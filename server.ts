@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,12 +20,30 @@ async function startServer() {
   const publicPath = path.join(root, 'public');
 
   if (isProd) {
-    app.use(express.static(distPath));
-    // Fallback to public folder if not found in dist (useful for dynamically generated assets)
+    console.log(`Serving static files from: ${distPath}`);
+    app.use(express.static(distPath, {
+      maxAge: '1d',
+      setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache');
+        }
+      }
+    }));
+    // Fallback to public folder
     app.use(express.static(publicPath));
   } else {
     app.use(express.static(publicPath));
   }
+
+  // Debugging route for icons
+  app.get('/icons/:name', (req, res, next) => {
+    const iconPath = path.join(publicPath, 'icons', req.params.name);
+    console.log(`Requesting icon: ${req.params.name} at ${iconPath}`);
+    if (fs.existsSync(iconPath)) {
+      return res.sendFile(iconPath);
+    }
+    next();
+  });
 
   // API routes
   app.get("/api/health", (req, res) => {
