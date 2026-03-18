@@ -11,6 +11,11 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
+  app.use('/icons', express.static(path.join(__dirname, 'public/icons')));
+  app.use('/manifest.json', express.static(path.join(__dirname, 'public/manifest.json')));
+  app.use('/favicon.ico', express.static(path.join(__dirname, 'public/favicon.ico')));
+  app.use('/apple-touch-icon.png', express.static(path.join(__dirname, 'public/apple-touch-icon.png')));
+  app.use('/sw.js', express.static(path.join(__dirname, 'public/sw.js')));
 
   // API routes
   app.get("/api/health", (req, res) => {
