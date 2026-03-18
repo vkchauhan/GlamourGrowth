@@ -1,4 +1,4 @@
-const CACHE_NAME = 'glamour-growth-v3';
+const CACHE_NAME = 'glamour-growth-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

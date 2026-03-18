@@ -11,11 +11,18 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
-  app.use('/icons', express.static(path.join(__dirname, 'public/icons')));
-  app.use('/manifest.json', express.static(path.join(__dirname, 'public/manifest.json')));
-  app.use('/favicon.ico', express.static(path.join(__dirname, 'public/favicon.ico')));
-  app.use('/apple-touch-icon.png', express.static(path.join(__dirname, 'public/apple-touch-icon.png')));
-  app.use('/sw.js', express.static(path.join(__dirname, 'public/sw.js')));
+
+  // Serve static files from 'dist' in production, or 'public' in development
+  const isProd = process.env.NODE_ENV === "production";
+  const distPath = path.join(__dirname, 'dist');
+  const publicPath = path.join(__dirname, 'public');
+
+  if (isProd) {
+    app.use(express.static(distPath));
+  } else {
+    // In dev, Vite handles most things, but we can serve public assets explicitly
+    app.use(express.static(publicPath));
+  }
 
   // API routes
   app.get("/api/health", (req, res) => {
@@ -41,16 +48,19 @@ async function startServer() {
   });
 
   // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  if (!isProd) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
     app.get('*', (req, res) => {
+      // SPA Fallback: Only serve index.html for non-file requests
+      // This prevents returning HTML for missing images/icons
+      if (req.path.includes('.') && !req.path.endsWith('.html')) {
+        return res.status(404).send('Not found');
+      }
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
