@@ -35,14 +35,25 @@ async function startServer() {
     app.use(express.static(publicPath));
   }
 
-  // Debugging route for icons
-  app.get('/icons/:name', (req, res, next) => {
-    const iconPath = path.join(publicPath, 'icons', req.params.name);
-    console.log(`Requesting icon: ${req.params.name} at ${iconPath}`);
+  // Explicit route for icons to ensure correct headers for Bubblewrap/PWA
+  app.get(['/icons/:name', '/apple-touch-icon.png', '/favicon.ico'], (req, res, next) => {
+    const name = req.params.name || path.basename(req.path);
+    const iconPath = req.path.includes('/icons/') 
+      ? path.join(publicPath, 'icons', name)
+      : path.join(publicPath, name);
+
+    console.log(`Requesting icon: ${name} at ${iconPath}`);
+    
     if (fs.existsSync(iconPath)) {
+      // Set explicit headers to satisfy Bubblewrap and other PWA tools
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Content-Disposition', 'inline');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
       return res.sendFile(iconPath);
     }
-    next();
+    
+    // If icon is missing, return 404 instead of falling through to SPA fallback
+    res.status(404).send(`Icon not found: ${name}`);
   });
 
   // API routes
