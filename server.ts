@@ -64,13 +64,19 @@ async function startServer() {
     if (fs.existsSync(manifestPath)) {
       try {
         const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        const baseUrl = process.env.APP_URL || "https://glamour-growth.vercel.app";
         
         if (manifest.icons) {
-          manifest.icons = manifest.icons.map((icon: any) => ({
-            ...icon,
-            src: icon.src.startsWith('http') ? icon.src : `${baseUrl}${icon.src}`
-          }));
+          manifest.icons = manifest.icons.map((icon: any) => {
+            let src = icon.src;
+            // If it's the hardcoded domain, we might want to replace it with the current baseUrl for testing
+            if (src.startsWith('https://glamour-growth.vercel.app')) {
+              src = src.replace('https://glamour-growth.vercel.app', baseUrl);
+            } else if (!src.startsWith('http')) {
+              src = `${baseUrl}${src}`;
+            }
+            return { ...icon, src };
+          });
         }
         
         res.setHeader('Content-Type', 'application/manifest+json');
@@ -124,12 +130,13 @@ async function startServer() {
       const indexPath = path.join(distPath, 'index.html');
       if (fs.existsSync(indexPath)) {
         let html = fs.readFileSync(indexPath, 'utf-8');
-        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        const baseUrl = process.env.APP_URL || "https://glamour-growth.vercel.app";
         
         // Inject absolute URLs into index.html
-        html = html.replace('href="/apple-touch-icon.png"', `href="${baseUrl}/apple-touch-icon.png"`);
-        html = html.replace('href="/favicon.ico"', `href="${baseUrl}/favicon.ico"`);
-        html = html.replace('href="/manifest.json"', `href="${baseUrl}/manifest.json"`);
+        html = html.replace('href="https://glamour-growth.vercel.app/apple-touch-icon.png"', `href="${baseUrl}/apple-touch-icon.png"`);
+        html = html.replace('href="https://glamour-growth.vercel.app/favicon.ico"', `href="${baseUrl}/favicon.ico"`);
+        html = html.replace('href="https://glamour-growth.vercel.app/favicon.ico"', `href="${baseUrl}/favicon.ico"`);
+        html = html.replace('href="https://glamour-growth.vercel.app/manifest.json"', `href="${baseUrl}/manifest.json"`);
         
         res.send(html);
       } else {
