@@ -49,11 +49,37 @@ async function startServer() {
       res.setHeader('Content-Type', 'image/png');
       res.setHeader('Content-Disposition', 'inline');
       res.setHeader('X-Content-Type-Options', 'nosniff');
+      // Allow cross-origin for icons to help with PWA tools
+      res.setHeader('Access-Control-Allow-Origin', '*');
       return res.sendFile(iconPath);
     }
     
     // If icon is missing, return 404 instead of falling through to SPA fallback
     res.status(404).send(`Icon not found: ${name}`);
+  });
+
+  // Serve manifest.json with absolute URLs
+  app.get('/manifest.json', (req, res) => {
+    const manifestPath = path.join(publicPath, 'manifest.json');
+    if (fs.existsSync(manifestPath)) {
+      try {
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        
+        if (manifest.icons) {
+          manifest.icons = manifest.icons.map((icon: any) => ({
+            ...icon,
+            src: icon.src.startsWith('http') ? icon.src : `${baseUrl}${icon.src}`
+          }));
+        }
+        
+        res.setHeader('Content-Type', 'application/manifest+json');
+        return res.json(manifest);
+      } catch (e) {
+        console.error('Error processing manifest:', e);
+      }
+    }
+    res.status(404).send('Manifest not found');
   });
 
   // API routes
@@ -94,7 +120,21 @@ async function startServer() {
       if (ext && ext !== '.html') {
         return res.status(404).send(`File not found: ${req.path}`);
       }
-      res.sendFile(path.join(distPath, 'index.html'));
+      
+      const indexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        let html = fs.readFileSync(indexPath, 'utf-8');
+        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        
+        // Inject absolute URLs into index.html
+        html = html.replace('href="/apple-touch-icon.png"', `href="${baseUrl}/apple-touch-icon.png"`);
+        html = html.replace('href="/favicon.ico"', `href="${baseUrl}/favicon.ico"`);
+        html = html.replace('href="/manifest.json"', `href="${baseUrl}/manifest.json"`);
+        
+        res.send(html);
+      } else {
+        res.status(404).send('Index not found');
+      }
     });
   }
 
