@@ -55,11 +55,11 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 export async function saveBooking(data: any) {
   try {
     const docRef = await addDoc(collection(db, "bookings"), {
-      name: data.client_name || data.name,
-      phone: data.client_phone || data.phone,
-      services: data.services,
-      price: data.total_amount || data.price,
-      date: data.date,
+      name: data.client_name || data.name || "Unknown Client",
+      phone: data.client_phone || data.phone || null,
+      services: data.services || [],
+      price: data.total_amount || data.price || 0,
+      date: data.date || new Date().toISOString().split('T')[0],
       client_notes: data.client_notes || null,
       createdAt: serverTimestamp()
     });
