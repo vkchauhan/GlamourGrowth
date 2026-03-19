@@ -7,16 +7,21 @@ service cloud.firestore {
     //
     // Collection: bookings
     // Fields:
-    //   - name: string (required)
-    //   - phone: string (optional)
+    //   - client_id: string (optional)
+    //   - client_name: string (required)
+    //   - client_phone: string (optional)
     //   - date: string (required, YYYY-MM-DD)
-    //   - booking_time: string (optional)
-    //   - price: number (required)
+    //   - total_amount: number (required)
     //   - services: list (optional)
-    //   - status: string (optional)
+    //   - client_notes: string (optional)
     //   - createdAt: timestamp (required)
     //
-    // Collection: services
+    // Collection: clients
+    // Fields:
+    //   - name: string (required)
+    //   - phone: string (optional)
+    //   - createdAt: timestamp (required)
+    //   - lastBookingAt: timestamp (optional)
     // Fields:
     //   - service_name: string (required)
     //   - duration_minutes: number (required)
@@ -37,9 +42,9 @@ service cloud.firestore {
     }
 
     function isValidBooking(data) {
-      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+      return data.client_name is string && data.client_name.size() > 0 && data.client_name.size() < 100 &&
              data.date is string && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
-             data.price is number && data.price >= 0;
+             data.total_amount is number && data.total_amount >= 0;
     }
 
     function isValidService(data) {
