@@ -189,7 +189,8 @@ export default function App() {
           amount: b.price,
           category: b.services?.[0]?.name || "General",
           clientName: b.name,
-          services: b.services
+          services: b.services,
+          clientNotes: b.client_notes
         }));
         setIncomeEntries(mapped);
       } catch (e) {
@@ -235,7 +236,8 @@ export default function App() {
       amount: booking.total_amount,
       category: booking.services[0]?.name || "General",
       clientName: booking.client_name,
-      services: booking.services
+      services: booking.services,
+      clientNotes: booking.client_notes
     };
     
     setIncomeEntries([entry, ...incomeEntries]);
@@ -590,6 +592,11 @@ export default function App() {
                               <p className="text-[10px] lg:text-xs text-[#8E8E8E] flex items-center gap-2 lg:gap-3 mt-1.5">
                                 <span className="italic">{new Date(entry.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
                               </p>
+                              {entry.clientNotes && (
+                                <p className="text-[10px] lg:text-xs text-[#666] mt-2 italic line-clamp-1 max-w-xs">
+                                  "{entry.clientNotes}"
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-4 lg:gap-8">

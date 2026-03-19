@@ -40,6 +40,7 @@ export interface Booking {
   services: BookingService[];
   total_amount: number;
   created_at?: string;
+  client_notes?: string;
 }
 
 export interface IncomeEntry {
@@ -49,6 +50,7 @@ export interface IncomeEntry {
   category: string; // e.g., "Bridal", "Party", "Festival", "Pre-wedding"
   clientName: string;
   services?: BookingService[];
+  clientNotes?: string;
 }
 
 export const OCCASIONS = [

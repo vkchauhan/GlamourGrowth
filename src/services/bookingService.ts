@@ -60,6 +60,7 @@ export async function saveBooking(data: any) {
       services: data.services,
       price: data.total_amount || data.price,
       date: data.date,
+      client_notes: data.client_notes || null,
       createdAt: serverTimestamp()
     });
     return { booking_id: docRef.id };

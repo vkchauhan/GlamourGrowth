@@ -14,6 +14,7 @@ interface Booking {
   duration_minutes: number;
   price: number;
   status: string;
+  client_notes?: string;
 }
 
 const DashboardBookings: React.FC = () => {
@@ -38,7 +39,8 @@ const DashboardBookings: React.FC = () => {
         service_name: b.services?.[0]?.name || "General Service",
         duration_minutes: b.duration_minutes || 60,
         price: b.price,
-        status: b.status || "confirmed"
+        status: b.status || "confirmed",
+        client_notes: b.client_notes
       }));
       setBookings(mapped);
     } catch (error) {
@@ -135,6 +137,12 @@ const DashboardBookings: React.FC = () => {
                       {booking.client_phone}
                     </div>
                   </div>
+                  {booking.client_notes && (
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100 italic text-xs text-gray-600">
+                      <span className="font-bold not-italic text-[10px] uppercase tracking-wider text-gray-400 block mb-1">Notes:</span>
+                      "{booking.client_notes}"
+                    </div>
+                  )}
                 </div>
               </div>
             ))
