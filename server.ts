@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, query, orderBy, startAt, endAt, limit, getDocs } from "firebase/firestore";
+import { getFirestore, collection, query, orderBy, startAt, endAt, limit, getDocs, where } from "firebase/firestore";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -127,6 +127,99 @@ async function startServer() {
     } catch (error) {
       console.error("Error searching clients:", error);
       res.status(500).json({ error: "Failed to search clients" });
+    }
+  });
+
+  app.get("/api/analytics/revenue", async (req, res) => {
+    const { from, to } = req.query;
+    
+    try {
+      let q = query(collection(db, "bookings"), orderBy("date", "desc"));
+      
+      if (from && to) {
+        q = query(
+          collection(db, "bookings"),
+          where("date", ">=", from),
+          where("date", "<=", to),
+          orderBy("date", "desc")
+        );
+      }
+
+      const querySnapshot = await getDocs(q);
+      const bookings = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as any[];
+
+      // Aggregation logic
+      let totalRevenue = 0;
+      const byServiceMap: Record<string, number> = {};
+      const byMonthMap: Record<string, number> = {};
+      const clientRevenueMap: Record<string, number> = {};
+      const clientBookingCount: Record<string, number> = {};
+
+      bookings.forEach(b => {
+        const revenue = b.total_amount || b.price || 0;
+        totalRevenue += revenue;
+
+        // By Service
+        if (b.services && Array.isArray(b.services)) {
+          b.services.forEach((s: any) => {
+            const serviceName = s.name || "Unknown";
+            const servicePrice = s.price || 0;
+            byServiceMap[serviceName] = (byServiceMap[serviceName] || 0) + servicePrice;
+          });
+        } else {
+          const serviceName = "General";
+          byServiceMap[serviceName] = (byServiceMap[serviceName] || 0) + revenue;
+        }
+
+        // By Month
+        const month = b.date.substring(0, 7); // YYYY-MM
+        byMonthMap[month] = (byMonthMap[month] || 0) + revenue;
+
+        // Top Clients
+        const clientName = b.client_name || b.name || "Unknown";
+        clientRevenueMap[clientName] = (clientRevenueMap[clientName] || 0) + revenue;
+        clientBookingCount[clientName] = (clientBookingCount[clientName] || 0) + 1;
+      });
+
+      const byService = Object.entries(byServiceMap).map(([service, revenue]) => ({ service, revenue }))
+        .sort((a, b) => b.revenue - a.revenue);
+      
+      const byMonth = Object.entries(byMonthMap).map(([month, revenue]) => ({ month, revenue }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+
+      const topClients = Object.entries(clientRevenueMap).map(([name, revenue]) => ({ name, revenue }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+
+      let repeatRevenue = 0;
+      let newRevenue = 0;
+      Object.entries(clientBookingCount).forEach(([name, count]) => {
+        if (count > 1) {
+          repeatRevenue += clientRevenueMap[name];
+        } else {
+          newRevenue += clientRevenueMap[name];
+        }
+      });
+
+      const averageBookingValue = bookings.length > 0 ? totalRevenue / bookings.length : 0;
+
+      res.json({
+        totalRevenue,
+        byService,
+        byMonth,
+        topClients,
+        repeatVsNew: {
+          repeat: repeatRevenue,
+          new: newRevenue
+        },
+        averageBookingValue
+      });
+    } catch (error) {
+      console.error("Error fetching revenue analytics:", error);
+      res.status(500).json({ error: "Failed to fetch revenue analytics" });
     }
   });
 

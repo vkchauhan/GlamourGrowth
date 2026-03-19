@@ -12,6 +12,7 @@ export enum AppTab {
   INSIGHTS = "insights",
   GROWTH = "growth",
   TRY_ON = "try_on",
+  REVENUE = "revenue",
 }
 
 export enum Language {

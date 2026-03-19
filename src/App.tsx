@@ -49,6 +49,7 @@ import Login from "./components/Login";
 import VirtualTryOn from "./components/VirtualTryOn";
 import BookingForm from "./components/BookingForm";
 import DailyGrowthScreen from "./pages/DailyGrowthScreen";
+import RevenueDashboard from "./pages/RevenueDashboard";
 import { Booking, BookingInsights } from "./types";
 import { BookingInsightsService } from "./services/BookingInsightsService";
 
@@ -346,10 +347,13 @@ export default function App() {
               HG
             </button>
           </div>
-          <div className="bg-white px-3 py-1.5 rounded-full border border-premium-border shadow-sm flex items-center gap-1">
+          <button 
+            onClick={() => setActiveTab(AppTab.REVENUE)}
+            className="bg-white px-3 py-1.5 rounded-full border border-premium-border shadow-sm flex items-center gap-1 hover:bg-premium-bg transition-colors active:scale-95"
+          >
             <IndianRupee className="w-3 h-3 text-premium-gold" />
             <span className="text-xs font-bold">{totalIncome.toLocaleString('en-IN')}</span>
-          </div>
+          </button>
           <button 
             onClick={handleLogout}
             className="p-2 rounded-full bg-white border border-premium-border text-[#8E8E8E] hover:text-red-500 transition-colors"
@@ -429,13 +433,16 @@ export default function App() {
         </nav>
 
         <div className="p-8 border-t border-premium-border space-y-4">
-          <div className="bg-white p-6 rounded-3xl border border-premium-border shadow-sm">
-            <p className="text-[10px] uppercase tracking-[0.15em] text-[#8E8E8E] font-bold mb-2">{t.totalRevenue}</p>
+          <button 
+            onClick={() => setActiveTab(AppTab.REVENUE)}
+            className="w-full text-left bg-white p-6 rounded-3xl border border-premium-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
+          >
+            <p className="text-[10px] uppercase tracking-[0.15em] text-[#8E8E8E] font-bold mb-2 group-hover:text-premium-gold transition-colors">{t.totalRevenue}</p>
             <p className="text-2xl font-serif font-bold flex items-center gap-1">
               <IndianRupee className="w-5 h-5 text-premium-gold" />
               {totalIncome.toLocaleString('en-IN')}
             </p>
-          </div>
+          </button>
           <button 
             onClick={handleLogout}
             className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all duration-300"
@@ -875,6 +882,18 @@ export default function App() {
                 className="space-y-8 lg:space-y-12"
               >
                 <VirtualTryOn language={language} />
+              </motion.div>
+            )}
+
+            {activeTab === AppTab.REVENUE && (
+              <motion.div
+                key="revenue"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="absolute inset-0 z-50 bg-slate-50 overflow-y-auto"
+              >
+                <RevenueDashboard onClose={() => setActiveTab(AppTab.DASHBOARD)} />
               </motion.div>
             )}
           </AnimatePresence>
