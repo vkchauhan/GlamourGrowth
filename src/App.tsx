@@ -73,7 +73,7 @@ export default function App() {
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([]);
   const [isAddingIncome, setIsAddingIncome] = useState(false);
 
-  // AI States
+  // Assistant States
   const [strategy, setStrategy] = useState<any>(null);
   const [loadingStrategy, setLoadingStrategy] = useState(false);
   const [selectedOccasion, setSelectedOccasion] = useState(OCCASIONS[0]);

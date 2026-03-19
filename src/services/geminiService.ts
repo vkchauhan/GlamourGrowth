@@ -14,7 +14,7 @@ const getSystemInstruction = (language: Language) => {
     ? "Always respond in Hinglish (Hindi written in English letters). Do not use Devanagari script. Keep it simple and easy to understand for Indian makeup artists."
     : "Always respond in professional English.";
 
-  return `You are GlamourGrowth AI — an intelligent business growth assistant designed exclusively for Indian freelance makeup artists.
+  return `You are Glamour Growth — an intelligent business growth assistant designed exclusively for Indian freelance makeup artists.
 Your mission is to help Indian makeup artists increase bookings, improve pricing confidence, manage client communication professionally, and grow monthly income.
 Focus ONLY on Indian market context. Use Indian pricing psychology. Avoid global or western festival references.
 Do not provide generic marketing advice. Be practical and revenue-focused. Use simple, confident, supportive tone.
@@ -241,10 +241,10 @@ export class GeminiService {
       }
 
       if (results.length > 0) return results;
-      throw new Error("AI Horde generation failed for all variations");
+      throw new Error("Image generation failed for all variations");
 
     } catch (error) {
-      console.warn("AI Horde SDXL pipeline failed, falling back to Pollinations:", error);
+      console.warn("Primary image pipeline failed, falling back to Pollinations:", error);
 
       const pollinationsPrompt = `Realistic Indian ${occasion} makeup look, ${clothingDesc}, professional makeup artist style, HD beauty photography, natural skin texture, soft lighting`;
       const pollinationsBase = `https://image.pollinations.ai/prompt/${encodeURIComponent(pollinationsPrompt)}`;
