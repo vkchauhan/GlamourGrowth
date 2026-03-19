@@ -3,9 +3,16 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, query, orderBy, startAt, endAt, limit, getDocs } from "firebase/firestore";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Initialize Firebase for the backend
+const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), "firebase-applet-config.json"), "utf-8"));
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
 
 async function startServer() {
   const app = express();
@@ -91,6 +98,36 @@ async function startServer() {
   // API routes
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
+  });
+
+  app.get("/api/clients/search", async (req, res) => {
+    const { query: queryText } = req.query;
+    
+    if (!queryText || typeof queryText !== 'string' || queryText.length < 2) {
+      return res.json([]);
+    }
+
+    try {
+      // Simple prefix search for name
+      const q = query(
+        collection(db, "clients"),
+        orderBy("name"),
+        startAt(queryText),
+        endAt(queryText + '\uf8ff'),
+        limit(10)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const clients = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      res.json(clients);
+    } catch (error) {
+      console.error("Error searching clients:", error);
+      res.status(500).json({ error: "Failed to search clients" });
+    }
   });
 
   app.get("/api/daily-growth-task", async (req, res) => {

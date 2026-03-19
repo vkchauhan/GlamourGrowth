@@ -15,10 +15,10 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { saveBooking } from '../services/bookingService';
+import { saveBooking, searchClients } from '../services/bookingService';
 import { db } from '../services/firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import { Booking, Service, BookingService } from '../types';
+import { Booking, Service, BookingService, Client } from '../types';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -56,12 +56,79 @@ export default function BookingForm({ onClose, onSuccess, language, translations
   }, [isDropdownOpen]);
   
   const [formData, setFormData] = useState({
+    client_id: '',
     client_name: '',
     client_phone: '',
     date: new Date().toISOString().split('T')[0],
     selectedServices: [] as BookingService[],
     client_notes: ''
   });
+
+  const [clientSuggestions, setClientSuggestions] = useState<Client[]>([]);
+  const [isSearchingClients, setIsSearchingClients] = useState(false);
+  const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+  const clientDropdownRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (clientDropdownRef.current && !clientDropdownRef.current.contains(event.target as Node)) {
+        setShowClientSuggestions(false);
+      }
+    };
+
+    if (showClientSuggestions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showClientSuggestions]);
+
+  const handleClientNameChange = (name: string) => {
+    setFormData({ ...formData, client_name: name, client_id: '' }); // Reset client_id if name changes manually
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (name.length >= 2) {
+      setIsSearchingClients(true);
+      setShowClientSuggestions(true);
+      
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          // Use the API endpoint for searching
+          const response = await fetch(`/api/clients/search?query=${encodeURIComponent(name)}`);
+          if (response.ok) {
+            const data = await response.json();
+            setClientSuggestions(data);
+          } else {
+            // Fallback to direct service call if API fails
+            const data = await searchClients(name);
+            setClientSuggestions(data || []);
+          }
+        } catch (error) {
+          console.error('Error searching clients:', error);
+        } finally {
+          setIsSearchingClients(false);
+        }
+      }, 300);
+    } else {
+      setClientSuggestions([]);
+      setShowClientSuggestions(false);
+    }
+  };
+
+  const selectClient = (client: Client) => {
+    setFormData({
+      ...formData,
+      client_id: client.id,
+      client_name: client.name,
+      client_phone: client.phone || ''
+    });
+    setShowClientSuggestions(false);
+  };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -170,6 +237,7 @@ export default function BookingForm({ onClose, onSuccess, language, translations
     setIsSubmitting(true);
     try {
         const result = await saveBooking({
+        client_id: formData.client_id || undefined,
         client_name: formData.client_name,
         client_phone: formData.client_phone,
         date: formData.date,
@@ -180,6 +248,7 @@ export default function BookingForm({ onClose, onSuccess, language, translations
 
       const booking: Booking = {
         booking_id: result.booking_id,
+        client_id: formData.client_id || undefined,
         client_name: formData.client_name,
         client_phone: formData.client_phone,
         date: formData.date,
@@ -236,18 +305,63 @@ export default function BookingForm({ onClose, onSuccess, language, translations
           <div className="space-y-6 lg:space-y-8">
             {/* Client Info */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-              <div className="space-y-2 lg:space-y-3">
+              <div className="space-y-2 lg:space-y-3 relative" ref={clientDropdownRef}>
                 <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
                   <User className="w-3 h-3 text-premium-gold" />
                   {t.clientName}
                 </label>
-                <input 
-                  type="text" 
-                  placeholder={t.clientNamePlaceholder}
-                  value={formData.client_name}
-                  onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-                  className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
-                />
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder={t.clientNamePlaceholder}
+                    value={formData.client_name}
+                    onChange={(e) => handleClientNameChange(e.target.value)}
+                    onFocus={() => {
+                      if (formData.client_name.length >= 2) setShowClientSuggestions(true);
+                    }}
+                    className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
+                  />
+                  {isSearchingClients && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      <Loader2 className="w-4 h-4 animate-spin text-premium-gold" />
+                    </div>
+                  )}
+                </div>
+
+                <AnimatePresence>
+                  {showClientSuggestions && (clientSuggestions.length > 0 || !isSearchingClients) && formData.client_name.length >= 2 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute z-20 w-full mt-2 bg-white border border-premium-border rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto"
+                    >
+                      {clientSuggestions.length > 0 ? (
+                        clientSuggestions.map((client) => (
+                          <div
+                            key={client.id}
+                            onClick={() => selectClient(client)}
+                            className="p-4 hover:bg-premium-bg cursor-pointer transition-colors border-b border-premium-border last:border-0"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-sm">{client.name}</span>
+                              {client.phone && (
+                                <span className="text-xs text-[#8E8E8E] flex items-center gap-1">
+                                  <Phone className="w-3 h-3" />
+                                  {client.phone}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      ) : !isSearchingClients && (
+                        <div className="p-4 text-center text-xs text-[#8E8E8E] italic">
+                          No existing client found.
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
               <div className="space-y-2 lg:space-y-3">
                 <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">

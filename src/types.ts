@@ -34,6 +34,7 @@ export interface BookingService {
 
 export interface Booking {
   booking_id?: string;
+  client_id?: string;
   client_name: string;
   client_phone?: string;
   date: string;
@@ -43,8 +44,17 @@ export interface Booking {
   client_notes?: string;
 }
 
+export interface Client {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  createdAt?: any;
+}
+
 export interface IncomeEntry {
   id: string;
+  client_id?: string;
   date: string;
   amount: number;
   category: string; // e.g., "Bridal", "Party", "Festival", "Pre-wedding"

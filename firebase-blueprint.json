@@ -28,6 +28,19 @@
       },
       "required": ["name", "date", "price"]
     },
+    "Client": {
+      "title": "Client",
+      "description": "A client of the makeup artist",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
     "Service": {
       "title": "Service",
       "description": "A makeup service offered by the artist",
@@ -113,6 +126,10 @@
     "bookings": {
       "schema": "Booking",
       "description": "Collection of client bookings"
+    },
+    "clients": {
+      "schema": "Client",
+      "description": "Collection of clients"
     },
     "services": {
       "schema": "Service",

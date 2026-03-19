@@ -54,6 +54,11 @@ service cloud.firestore {
       allow read, update, delete: if isAuthenticated();
     }
 
+    // Clients: Only authenticated users can read/write
+    match /clients/{clientId} {
+      allow read, write: if isAuthenticated();
+    }
+
     // Services: Anyone can read (public booking), but only authenticated users can write
     match /services/{serviceId} {
       allow read: if true;
