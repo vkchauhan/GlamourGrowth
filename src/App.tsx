@@ -581,7 +581,7 @@ export default function App() {
                         <div key={entry.id} className="p-6 lg:p-8 flex items-center justify-between hover:bg-premium-bg transition-colors group">
                           <div className="flex items-center gap-4 lg:gap-6">
                             <div className="w-10 h-10 lg:w-14 lg:h-14 rounded-full bg-premium-bg border border-premium-border flex items-center justify-center font-serif text-lg lg:text-xl font-medium text-premium-ink">
-                              {entry.clientName.charAt(0)}
+                              {(entry.clientName || "?").charAt(0)}
                             </div>
                             <div>
                               <p className="text-base lg:text-lg font-medium">{entry.clientName}</p>

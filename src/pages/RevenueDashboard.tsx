@@ -254,7 +254,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose }) => {
               <TrendingUp className="w-5 h-5 text-emerald-600" />
               Monthly Revenue Trend
             </h3>
-            <div className="h-80 w-full">
+            <div className="h-80 w-full min-h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data?.byMonth || []}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -287,8 +287,8 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose }) => {
               <Briefcase className="w-5 h-5 text-blue-600" />
               Revenue by Service
             </h3>
-            <div className="h-80 w-full flex flex-col md:flex-row items-center">
-              <div className="w-full h-full md:w-1/2">
+            <div className="h-80 w-full min-h-[320px] flex flex-col md:flex-row items-center">
+              <div className="w-full h-full md:w-1/2 min-h-[320px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -381,7 +381,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose }) => {
               {data?.topClients.map((client, index) => (
                 <div key={index} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
-                    {client.name.charAt(0)}
+                    {(client.name || "?").charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-slate-900 truncate">{client.name}</p>
