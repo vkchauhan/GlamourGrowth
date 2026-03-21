@@ -60,6 +60,7 @@ export interface IncomeEntry {
   amount: number;
   category: string; // e.g., "Bridal", "Party", "Festival", "Pre-wedding"
   clientName: string;
+  clientPhone?: string;
   services?: BookingService[];
   clientNotes?: string;
 }
@@ -177,4 +178,18 @@ export interface AnalyticsEvent {
   task_id?: string;
   metadata?: any;
   createdAt: any;
+}
+
+export interface SmartNudge {
+  id: string;
+  type: 'follow_up' | 'review_request' | 'upcoming_reminder';
+  title_en: string;
+  title_hi: string;
+  message_en: string;
+  message_hi: string;
+  whatsapp_text_en: string;
+  whatsapp_text_hi: string;
+  client_name: string;
+  client_phone?: string;
+  date: string;
 }

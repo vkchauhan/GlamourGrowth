@@ -1,0 +1,52 @@
+import { IncomeEntry, SmartNudge, Language } from "../types";
+import { format, subDays, isSameDay, parseISO } from "date-fns";
+
+export const nudgeService = {
+  generateNudges: (bookings: IncomeEntry[]): SmartNudge[] => {
+    const nudges: SmartNudge[] = [];
+    const today = new Date();
+    const yesterday = subDays(today, 1);
+    
+    bookings.forEach(booking => {
+      const bookingDate = parseISO(booking.date);
+      
+      // 1. Follow up for yesterday's event
+      if (isSameDay(bookingDate, yesterday)) {
+        nudges.push({
+          id: `followup-${booking.id}`,
+          type: 'follow_up',
+          title_en: "Follow up with " + booking.clientName,
+          title_hi: booking.clientName + " से फीडबैक लें",
+          message_en: `${booking.clientName}'s event was yesterday. Send a 'Thank You' and ask for a review?`,
+          message_hi: `${booking.clientName} का इवेंट कल था। क्या आप उन्हें 'Thank You' मैसेज भेजकर रिव्यू मांगना चाहेंगे?`,
+          whatsapp_text_en: `Hi ${booking.clientName}, it was a pleasure working with you yesterday! I hope you loved the look. Would you mind sharing a quick review or a photo? It helps my small business grow! - Glamour Growth`,
+          whatsapp_text_hi: `नमस्ते ${booking.clientName}, कल आपके साथ काम करके बहुत अच्छा लगा! मुझे उम्मीद है कि आपको अपना लुक पसंद आया होगा। क्या आप एक छोटा सा रिव्यू या फोटो शेयर कर सकते हैं? इससे मेरे बिजनेस को बढ़ने में मदद मिलेगी! - Glamour Growth`,
+          client_name: booking.clientName,
+          client_phone: booking.clientPhone,
+          date: booking.date
+        });
+      }
+      
+      // 2. Review request for bookings from 3 days ago (if not already nudged)
+      const threeDaysAgo = subDays(today, 3);
+      if (isSameDay(bookingDate, threeDaysAgo)) {
+        nudges.push({
+          id: `review-${booking.id}`,
+          type: 'review_request',
+          title_en: "Ask for Review: " + booking.clientName,
+          title_hi: "रिव्यू मांगें: " + booking.clientName,
+          message_en: `It's been 3 days since ${booking.clientName}'s session. Perfect time to ask for a Google/Instagram review!`,
+          message_hi: `${booking.clientName} के सेशन को 3 दिन हो गए हैं। गूगल या इंस्टाग्राम पर रिव्यू मांगने का यह सही समय है!`,
+          whatsapp_text_en: `Hi ${booking.clientName}, hope you're doing well! If you enjoyed my service, I'd love it if you could leave a review on my profile. Your support means a lot!`,
+          whatsapp_text_hi: `नमस्ते ${booking.clientName}, आशा है कि आप ठीक होंगे! अगर आपको मेरी सर्विस पसंद आई, तो मुझे खुशी होगी अगर आप मेरे प्रोफाइल पर एक रिव्यू दे सकें। आपका सपोर्ट मेरे लिए बहुत मायने रखता है!`,
+          client_name: booking.clientName,
+          client_phone: booking.clientPhone,
+          date: booking.date
+        });
+      }
+    });
+
+    // Return only the most relevant nudges (limit to 2)
+    return nudges.slice(0, 2);
+  }
+};

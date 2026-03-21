@@ -38,13 +38,14 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { AppTab, IncomeEntry, OCCASIONS, Language } from "./types";
+import { AppTab, IncomeEntry, OCCASIONS, Language, SmartNudge } from "./types";
 import { geminiService } from "./services/geminiService";
 import { getBookings, deleteBooking, subscribeToBookings } from "./services/bookingService";
 import { auth, db } from "./services/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { pwaService } from "./services/pwaService";
+import { nudgeService } from "./services/nudgeService";
 import en from "./locales/en.json";
 import hi from "./locales/hi.json";
 import Login from "./components/Login";
@@ -194,6 +195,7 @@ export default function App() {
         amount: b.total_amount || b.price || 0,
         category: b.services?.[0]?.name || "General",
         clientName: b.client_name || b.name || "Unknown Client",
+        clientPhone: b.client_phone || b.phone,
         services: b.services || [],
         clientNotes: b.client_notes
       }));
@@ -484,6 +486,51 @@ export default function App() {
                     {t.recordBooking}
                   </button>
                 </header>
+
+                {/* Smart Nudges Section */}
+                {(() => {
+                  const nudges = nudgeService.generateNudges(incomeEntries);
+                  if (nudges.length === 0) return null;
+                  
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {nudges.map(nudge => (
+                        <motion.div
+                          key={nudge.id}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="bg-premium-gold/5 border border-premium-gold/20 p-6 rounded-[32px] relative overflow-hidden group"
+                        >
+                          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Sparkles className="w-12 h-12 text-premium-gold" />
+                          </div>
+                          
+                          <div className="flex items-start gap-4">
+                            <div className="w-10 h-10 rounded-full bg-premium-gold/10 flex items-center justify-center flex-shrink-0">
+                              <Bell className="w-5 h-5 text-premium-gold" />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-serif font-medium text-premium-ink">
+                                {language === Language.HI ? nudge.title_hi : nudge.title_en}
+                              </h3>
+                              <p className="text-sm text-[#666] mt-1 font-light italic">
+                                {language === Language.HI ? nudge.message_hi : nudge.message_en}
+                              </p>
+                              
+                              <button
+                                onClick={() => shareOnWhatsApp(language === Language.HI ? nudge.whatsapp_text_hi : nudge.whatsapp_text_en)}
+                                className="mt-4 flex items-center gap-2 px-6 py-2.5 bg-[#25D366] text-white rounded-full text-xs font-bold hover:bg-[#128C7E] transition-all shadow-lg shadow-[#25D366]/20"
+                              >
+                                <MessageCircle className="w-4 h-4 fill-current" />
+                                {language === Language.HI ? "WhatsApp पर भेजें" : "Send on WhatsApp"}
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  );
+                })()}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
                   <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm hover:shadow-md transition-shadow">
