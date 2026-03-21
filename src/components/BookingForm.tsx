@@ -40,6 +40,19 @@ export default function BookingForm({ onClose, onSuccess, language, translations
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
+  const [lastUsedPrices, setLastUsedPrices] = useState<Record<string, number>>({});
+  
+  useEffect(() => {
+    const saved = localStorage.getItem(LAST_PRICES_KEY);
+    if (saved) {
+      try {
+        setLastUsedPrices(JSON.parse(saved));
+      } catch (e) {
+        console.error('Error parsing last used prices:', e);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -196,13 +209,8 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         selectedServices: formData.selectedServices.filter(s => s.service_id !== service.service_id)
       });
     } else {
-      // Get last used price from localStorage or fallback to default
-      const savedPrices = localStorage.getItem(LAST_PRICES_KEY);
-      let price = service.default_price;
-      if (savedPrices) {
-        const prices = JSON.parse(savedPrices);
-        price = prices[service.service_id] ?? service.default_price;
-      }
+      // Use last used price from state or fallback to default
+      const price = lastUsedPrices[service.service_id] ?? service.default_price;
 
       setFormData({
         ...formData,
@@ -261,13 +269,14 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         client_notes: formData.client_notes.trim() || undefined
       };
       
-      // Save last used prices to localStorage
+      // Save last used prices to localStorage and state
       const savedPricesRaw = localStorage.getItem(LAST_PRICES_KEY);
       const prices = savedPricesRaw ? JSON.parse(savedPricesRaw) : {};
       formData.selectedServices.forEach(s => {
         prices[s.service_id] = s.price;
       });
       localStorage.setItem(LAST_PRICES_KEY, JSON.stringify(prices));
+      setLastUsedPrices(prices);
 
       onSuccess(booking);
       onClose();
@@ -489,7 +498,7 @@ export default function BookingForm({ onClose, onSuccess, language, translations
                                 <div className="flex items-center gap-3">
                                   <span className="text-xs font-bold flex items-center">
                                     <IndianRupee className="w-2.5 h-2.5" />
-                                    {service.default_price}
+                                    {lastUsedPrices[service.service_id] ?? service.default_price}
                                   </span>
                                   <div className={cn(
                                     "w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
