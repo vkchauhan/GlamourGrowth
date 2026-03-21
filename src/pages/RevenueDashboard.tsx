@@ -31,8 +31,11 @@ import { format, startOfToday, startOfWeek, startOfMonth, subDays } from 'date-f
 
 interface RevenueData {
   totalRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
   byService: { service: string; revenue: number }[];
-  byMonth: { month: string; revenue: number }[];
+  byMonth: { month: string; revenue: number; expenses: number; profit: number }[];
+  byCategory: { category: string; amount: number }[];
   topClients: { name: string; revenue: number }[];
   repeatVsNew: { repeat: number; new: number };
   averageBookingValue: number;
@@ -43,9 +46,10 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 interface RevenueDashboardProps {
   onClose?: () => void;
   bookings: any[];
+  expenses: any[];
 }
 
-const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings }) => {
+const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings, expenses }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<RevenueData | null>(null);
@@ -74,10 +78,18 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings }
         return b.date >= from && b.date <= to;
       });
 
+      // Filter expenses by date range
+      const filteredExpenses = expenses.filter(e => {
+        if (!from) return true;
+        return e.date >= from && e.date <= to;
+      });
+
       // Aggregation logic (similar to backend)
       let totalRevenue = 0;
+      let totalExpenses = 0;
       const byServiceMap: Record<string, number> = {};
-      const byMonthMap: Record<string, number> = {};
+      const byMonthMap: Record<string, { revenue: number; expenses: number }> = {};
+      const byCategoryMap: Record<string, number> = {};
       const clientRevenueMap: Record<string, number> = {};
       const clientBookingCount: Record<string, number> = {};
 
@@ -101,7 +113,8 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings }
         const dateStr = b.date || "";
         if (dateStr.length >= 7) {
           const month = dateStr.substring(0, 7); // YYYY-MM
-          byMonthMap[month] = (byMonthMap[month] || 0) + revenue;
+          if (!byMonthMap[month]) byMonthMap[month] = { revenue: 0, expenses: 0 };
+          byMonthMap[month].revenue += revenue;
         }
 
         // Top Clients
@@ -110,11 +123,35 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings }
         clientBookingCount[clientName] = (clientBookingCount[clientName] || 0) + 1;
       });
 
+      filteredExpenses.forEach(e => {
+        const amount = e.amount || 0;
+        totalExpenses += amount;
+
+        // By Category
+        const category = e.category || "Other";
+        byCategoryMap[category] = (byCategoryMap[category] || 0) + amount;
+
+        // By Month
+        const dateStr = e.date || "";
+        if (dateStr.length >= 7) {
+          const month = dateStr.substring(0, 7); // YYYY-MM
+          if (!byMonthMap[month]) byMonthMap[month] = { revenue: 0, expenses: 0 };
+          byMonthMap[month].expenses += amount;
+        }
+      });
+
       const byService = Object.entries(byServiceMap).map(([service, revenue]) => ({ service, revenue }))
         .sort((a, b) => b.revenue - a.revenue);
       
-      const byMonth = Object.entries(byMonthMap).map(([month, revenue]) => ({ month, revenue }))
-        .sort((a, b) => a.month.localeCompare(b.month));
+      const byMonth = Object.entries(byMonthMap).map(([month, values]) => ({ 
+        month, 
+        revenue: values.revenue, 
+        expenses: values.expenses,
+        profit: values.revenue - values.expenses
+      })).sort((a, b) => a.month.localeCompare(b.month));
+
+      const byCategory = Object.entries(byCategoryMap).map(([category, amount]) => ({ category, amount }))
+        .sort((a, b) => b.amount - a.amount);
 
       const topClients = Object.entries(clientRevenueMap).map(([name, revenue]) => ({ name, revenue }))
         .sort((a, b) => b.revenue - a.revenue)
@@ -134,8 +171,11 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings }
 
       setData({
         totalRevenue,
+        totalExpenses,
+        netProfit: totalRevenue - totalExpenses,
         byService,
         byMonth,
+        byCategory,
         topClients,
         repeatVsNew: {
           repeat: repeatRevenue,
@@ -146,7 +186,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings }
     };
 
     calculateAnalytics();
-  }, [dateRange, customRange, bookings]);
+  }, [dateRange, customRange, bookings, expenses]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -247,22 +287,52 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings }
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-emerald-600 p-6 rounded-2xl shadow-lg shadow-emerald-100 text-white"
+            className="bg-premium-ink p-6 rounded-2xl shadow-lg shadow-black/10 text-white"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <TrendingUp className="w-6 h-6" />
+              <div className="p-2 bg-white/10 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-premium-gold" />
               </div>
-              <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">Total</span>
+              <span className="text-xs font-medium bg-white/10 px-2 py-1 rounded-full">Net Profit</span>
             </div>
-            <p className="text-emerald-100 text-sm font-medium mb-1">Total Revenue</p>
-            <h2 className="text-3xl font-bold">{formatCurrency(data?.totalRevenue || 0)}</h2>
+            <p className="text-slate-400 text-sm font-medium mb-1">Net Profit</p>
+            <h2 className="text-3xl font-bold">{formatCurrency(data?.netProfit || 0)}</h2>
           </motion.div>
 
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
+            className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-emerald-50 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-emerald-600" />
+              </div>
+            </div>
+            <p className="text-slate-500 text-sm font-medium mb-1">Total Revenue</p>
+            <h2 className="text-3xl font-bold text-slate-900">{formatCurrency(data?.totalRevenue || 0)}</h2>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-red-50 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-red-600" />
+              </div>
+            </div>
+            <p className="text-slate-500 text-sm font-medium mb-1">Total Expenses</p>
+            <h2 className="text-3xl font-bold text-slate-900">{formatCurrency(data?.totalExpenses || 0)}</h2>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
             className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"
           >
             <div className="flex items-center justify-between mb-4">
@@ -273,51 +343,19 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings }
             <p className="text-slate-500 text-sm font-medium mb-1">Avg. Booking Value</p>
             <h2 className="text-3xl font-bold text-slate-900">{formatCurrency(data?.averageBookingValue || 0)}</h2>
           </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-amber-50 rounded-lg">
-                <Users className="w-6 h-6 text-amber-600" />
-              </div>
-            </div>
-            <p className="text-slate-500 text-sm font-medium mb-1">Repeat Contribution</p>
-            <h2 className="text-3xl font-bold text-slate-900">
-              {data ? Math.round((data.repeatVsNew.repeat / data.totalRevenue) * 100) : 0}%
-            </h2>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-purple-50 rounded-lg">
-                <Calendar className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-            <p className="text-slate-500 text-sm font-medium mb-1">Active Services</p>
-            <h2 className="text-3xl font-bold text-slate-900">{data?.byService.length || 0}</h2>
-          </motion.div>
         </div>
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Revenue Trend */}
+          {/* Profitability Trend */}
           <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
-              Monthly Revenue Trend
+              <TrendingUp className="w-5 h-5 text-premium-gold" />
+              Profit vs Expenses Trend
             </h3>
             <div className="h-80 w-full min-h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data?.byMonth || []}>
+                <LineChart data={data?.byMonth || []}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis 
                     dataKey="month" 
@@ -332,12 +370,13 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings }
                     tickFormatter={(value) => `₹${value/1000}k`}
                   />
                   <Tooltip 
-                    cursor={{ fill: '#f8fafc' }}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    formatter={(value: number) => [formatCurrency(value), 'Revenue']}
                   />
-                  <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
+                  <Legend />
+                  <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Revenue" />
+                  <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Expenses" />
+                  <Line type="monotone" dataKey="profit" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} name="Net Profit" />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </section>

@@ -38,9 +38,15 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { AppTab, IncomeEntry, OCCASIONS, Language, SmartNudge } from "./types";
+import { AppTab, IncomeEntry, OCCASIONS, Language, SmartNudge, Expense } from "./types";
 import { geminiService } from "./services/geminiService";
-import { getBookings, deleteBooking, subscribeToBookings } from "./services/bookingService";
+import { 
+  getBookings, 
+  deleteBooking, 
+  subscribeToBookings,
+  subscribeToExpenses,
+  deleteExpense
+} from "./services/bookingService";
 import { auth, db } from "./services/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -51,6 +57,7 @@ import hi from "./locales/hi.json";
 import Login from "./components/Login";
 import VirtualTryOn from "./components/VirtualTryOn";
 import BookingForm from "./components/BookingForm";
+import ExpenseForm from "./components/ExpenseForm";
 import DailyGrowthScreen from "./pages/DailyGrowthScreen";
 import RevenueDashboard from "./pages/RevenueDashboard";
 import { Booking, BookingInsights } from "./types";
@@ -75,7 +82,9 @@ export default function App() {
   });
   const t = translations[language];
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isAddingIncome, setIsAddingIncome] = useState(false);
+  const [isAddingExpense, setIsAddingExpense] = useState(false);
 
   // Assistant States
   const [strategy, setStrategy] = useState<any>(null);
@@ -190,7 +199,7 @@ export default function App() {
       return;
     }
     
-    const unsubscribe = subscribeToBookings((data) => {
+    const unsubscribeBookings = subscribeToBookings((data) => {
       // Map Firestore data to IncomeEntry format
       const mapped: IncomeEntry[] = data.map((b: any) => ({
         id: b.booking_id,
@@ -203,8 +212,15 @@ export default function App() {
       }));
       setIncomeEntries(mapped);
     });
+
+    const unsubscribeExpenses = subscribeToExpenses((data) => {
+      setExpenses(data);
+    });
     
-    return () => unsubscribe();
+    return () => {
+      unsubscribeBookings();
+      unsubscribeExpenses();
+    };
   }, [user]);
 
   // Save data to localStorage
@@ -225,6 +241,12 @@ export default function App() {
   const totalIncome = useMemo(() => 
     incomeEntries.reduce((sum, entry) => sum + entry.amount, 0),
   [incomeEntries]);
+
+  const totalExpenses = useMemo(() => 
+    expenses.reduce((sum, entry) => sum + entry.amount, 0),
+  [expenses]);
+
+  const netProfit = totalIncome - totalExpenses;
 
   const chartData = useMemo(() => {
     const months = [t.jan, t.feb, t.mar, t.apr, t.may, t.jun, t.jul, t.aug, t.sep, t.oct, t.nov, t.dec];
@@ -486,13 +508,22 @@ export default function App() {
                     <h2 className="text-3xl lg:text-5xl font-serif font-medium tracking-tight">{t.businessOverview}</h2>
                     <p className="text-[#666] mt-2 lg:mt-3 text-base lg:text-lg font-light italic">{t.businessOverviewSub}</p>
                   </div>
-                  <button 
-                    onClick={() => setIsAddingIncome(true)}
-                    className="w-full lg:w-auto bg-premium-ink text-white px-8 py-4 rounded-full text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#333] transition-all shadow-2xl shadow-black/10 hover:scale-105 active:scale-95"
-                  >
-                    <Plus className="w-4 h-4 text-premium-gold" />
-                    {t.recordBooking}
-                  </button>
+                  <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
+                    <button 
+                      onClick={() => setIsAddingIncome(true)}
+                      className="flex-1 lg:flex-none bg-premium-ink text-white px-8 py-4 rounded-full text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#333] transition-all shadow-2xl shadow-black/10 hover:scale-105 active:scale-95"
+                    >
+                      <Plus className="w-4 h-4 text-premium-gold" />
+                      {t.recordBooking}
+                    </button>
+                    <button 
+                      onClick={() => setIsAddingExpense(true)}
+                      className="flex-1 lg:flex-none bg-white text-premium-ink border border-premium-border px-8 py-4 rounded-full text-sm font-bold flex items-center justify-center gap-2 hover:bg-premium-bg transition-all shadow-sm hover:scale-105 active:scale-95"
+                    >
+                      <Plus className="w-4 h-4 text-red-500" />
+                      Record Expense
+                    </button>
+                  </div>
                 </header>
 
                 {/* Smart Nudges Section */}
@@ -946,6 +977,7 @@ export default function App() {
               >
                 <RevenueDashboard 
                   bookings={incomeEntries} 
+                  expenses={expenses}
                   onClose={() => setActiveTab(AppTab.DASHBOARD)} 
                 />
               </motion.div>
@@ -984,12 +1016,20 @@ export default function App() {
         ))}
       </nav>
 
-      {/* Add Income Modal */}
+      {/* Modals */}
       <AnimatePresence>
         {isAddingIncome && (
           <BookingForm 
             onClose={() => setIsAddingIncome(false)}
             onSuccess={handleAddBooking}
+            language={language}
+            translations={t}
+          />
+        )}
+        {isAddingExpense && (
+          <ExpenseForm 
+            onClose={() => setIsAddingExpense(false)}
+            onSuccess={() => setIsAddingExpense(false)}
             language={language}
             translations={t}
           />

@@ -33,6 +33,15 @@ service cloud.firestore {
     //   - availability: list (required)
     //   - updatedAt: timestamp (required)
     //
+    // Collection: expenses
+    // Fields:
+    //   - user_id: string (required)
+    //   - amount: number (required)
+    //   - category: string (required)
+    //   - date: string (required, YYYY-MM-DD)
+    //   - notes: string (optional)
+    //   - createdAt: timestamp (required)
+    //
     // ===============================================================
 
     // Helper Functions
@@ -50,6 +59,13 @@ service cloud.firestore {
       return data.service_name is string && data.service_name.size() > 0 && data.service_name.size() < 100 &&
              data.duration_minutes is number && data.duration_minutes > 0 &&
              data.price is number && data.price >= 0;
+    }
+
+    function isValidExpense(data) {
+      return data.user_id is string && data.user_id == request.auth.uid &&
+             data.amount is number && data.amount > 0 &&
+             data.category is string && data.category.size() > 0 &&
+             data.date is string && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$');
     }
 
     // Bookings: Anyone can create (public booking), but only authenticated users can read/update/delete
@@ -89,7 +105,12 @@ service cloud.firestore {
 
     // Analytics Events: Only owner can write, only owner can read
     match /analytics_events/{eventId} {
-      allow read, create: if isAuthenticated() && (request.auth.uid == resource.data.user_id || request.auth.uid == request.resource.data.user_id);
+      allow read, create: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid) && (request.resource == null || request.resource.data.user_id == request.auth.uid);
+    }
+
+    // Expenses: Only owner can read/write
+    match /expenses/{expenseId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid) && (request.resource == null || isValidExpense(request.resource.data));
     }
   }
 }

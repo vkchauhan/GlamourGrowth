@@ -191,3 +191,13 @@ export interface SmartNudge {
   client_phone?: string;
   date: string;
 }
+
+export interface Expense {
+  id?: string;
+  user_id: string;
+  amount: number;
+  category: string;
+  date: string;
+  notes?: string;
+  createdAt?: any;
+}

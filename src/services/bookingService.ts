@@ -235,3 +235,44 @@ export async function getAvailability() {
     handleFirestoreError(error, OperationType.GET, "settings/availability");
   }
 }
+
+// Expenses
+export const saveExpense = async (expense: any) => {
+  try {
+    const docRef = await addDoc(collection(db, "expenses"), {
+      ...expense,
+      createdAt: new Date().toISOString()
+    });
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, "expenses");
+  }
+};
+
+export const deleteExpense = async (id: string) => {
+  try {
+    await deleteDoc(doc(db, "expenses", id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `expenses/${id}`);
+  }
+};
+
+export const subscribeToExpenses = (callback: (expenses: any[]) => void) => {
+  if (!auth.currentUser) return () => {};
+  
+  const q = query(
+    collection(db, "expenses"),
+    where("user_id", "==", auth.currentUser.uid),
+    orderBy("date", "desc")
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const expenses = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as any[];
+    callback(expenses);
+  }, (error) => {
+    handleFirestoreError(error, OperationType.GET, "expenses");
+  });
+};

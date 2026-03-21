@@ -119,6 +119,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["user_id", "event_type", "createdAt"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "A business expense recorded by the artist",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_id", "amount", "category", "date"]
     }
   },
   "firestore": {
@@ -149,6 +164,10 @@
     "analytics_events": {
       "schema": "AnalyticsEvent",
       "description": "Logs of user activity and system events"
+    },
+    "expenses": {
+      "schema": "Expense",
+      "description": "Collection of business expenses"
     }
   }
 }
