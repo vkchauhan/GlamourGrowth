@@ -147,12 +147,14 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         } else {
           // Fallback to defaults
           const mockServices: Service[] = [
-            { service_id: 'pedicure_id', name: 'Pedicure', default_price: 800, category: 'Nails' },
+            { service_id: 'pedicure_id', name: 'Pedicure', default_price: 600, category: 'Nails' },
             { service_id: 'manicure_id', name: 'Manicure', default_price: 700, category: 'Nails' },
             { service_id: 'waxing_id', name: 'Waxing', default_price: 1200, category: 'Hair Removal' },
             { service_id: 'threading_id', name: 'Threading', default_price: 200, category: 'Hair Removal' },
             { service_id: 'makeup_id', name: 'Party Makeup', default_price: 2500, category: 'Makeup' },
             { service_id: 'bridal_makeup_id', name: 'Bridal Makeup', default_price: 15000, category: 'Makeup' },
+            { service_id: 'facial_id', name: 'Facial', default_price: 1500, category: 'Skin Care' },
+            { service_id: 'hair_styling_id', name: 'Hair Styling', default_price: 1000, category: 'Hair' },
           ];
           setServices(mockServices);
         }
@@ -160,12 +162,14 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         console.error('Failed to fetch services', error);
         // Fallback to defaults
         const mockServices: Service[] = [
-          { service_id: 'pedicure_id', name: 'Pedicure', default_price: 800, category: 'Nails' },
+          { service_id: 'pedicure_id', name: 'Pedicure', default_price: 600, category: 'Nails' },
           { service_id: 'manicure_id', name: 'Manicure', default_price: 700, category: 'Nails' },
           { service_id: 'waxing_id', name: 'Waxing', default_price: 1200, category: 'Hair Removal' },
           { service_id: 'threading_id', name: 'Threading', default_price: 200, category: 'Hair Removal' },
           { service_id: 'makeup_id', name: 'Party Makeup', default_price: 2500, category: 'Makeup' },
           { service_id: 'bridal_makeup_id', name: 'Bridal Makeup', default_price: 15000, category: 'Makeup' },
+          { service_id: 'facial_id', name: 'Facial', default_price: 1500, category: 'Skin Care' },
+          { service_id: 'hair_styling_id', name: 'Hair Styling', default_price: 1000, category: 'Hair' },
         ];
         setServices(mockServices);
       } finally {

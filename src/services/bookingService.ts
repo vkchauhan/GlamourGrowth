@@ -184,13 +184,31 @@ export async function getServices() {
 
 export async function saveService(serviceData: any) {
   try {
-    const docRef = await addDoc(collection(db, "services"), {
-      ...serviceData,
-      createdAt: serverTimestamp()
-    });
-    return { service_id: docRef.id, ...serviceData };
+    if (serviceData.service_id) {
+      const serviceRef = doc(db, "services", serviceData.service_id);
+      const { service_id, ...updateData } = serviceData;
+      await setDoc(serviceRef, {
+        ...updateData,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      return serviceData;
+    } else {
+      const docRef = await addDoc(collection(db, "services"), {
+        ...serviceData,
+        createdAt: serverTimestamp()
+      });
+      return { service_id: docRef.id, ...serviceData };
+    }
   } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, "services");
+    handleFirestoreError(error, serviceData.service_id ? OperationType.UPDATE : OperationType.CREATE, "services");
+  }
+}
+
+export async function deleteService(id: string) {
+  try {
+    await deleteDoc(doc(db, "services", id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `services/${id}`);
   }
 }
 
