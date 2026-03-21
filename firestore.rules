@@ -13,7 +13,6 @@ service cloud.firestore {
     //   - date: string (required, YYYY-MM-DD)
     //   - total_amount: number (required)
     //   - services: list (optional)
-    //   - client_notes: string (optional)
     //   - createdAt: timestamp (required)
     //
     // Collection: clients

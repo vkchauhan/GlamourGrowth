@@ -199,8 +199,7 @@ export default function App() {
         category: b.services?.[0]?.name || "General",
         clientName: b.client_name || b.name || "Unknown Client",
         clientPhone: b.client_phone || b.phone,
-        services: b.services || [],
-        clientNotes: b.client_notes
+        services: b.services || []
       }));
       setIncomeEntries(mapped);
     });
@@ -647,11 +646,6 @@ export default function App() {
                               <p className="text-[10px] lg:text-xs text-[#8E8E8E] flex items-center gap-2 lg:gap-3 mt-1.5">
                                 <span className="italic">{new Date(entry.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
                               </p>
-                              {entry.clientNotes && (
-                                <p className="text-[10px] lg:text-xs text-[#666] mt-2 italic line-clamp-1 max-w-xs">
-                                  "{entry.clientNotes}"
-                                </p>
-                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-4 lg:gap-8">

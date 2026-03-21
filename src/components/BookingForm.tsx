@@ -73,8 +73,7 @@ export default function BookingForm({ onClose, onSuccess, language, translations
     client_name: '',
     client_phone: '',
     date: new Date().toISOString().split('T')[0],
-    selectedServices: [] as BookingService[],
-    client_notes: ''
+    selectedServices: [] as BookingService[]
   });
 
   const [clientSuggestions, setClientSuggestions] = useState<Client[]>([]);
@@ -276,8 +275,7 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         client_phone: formData.client_phone,
         date: formData.date,
         services: formData.selectedServices,
-        total_amount: totalAmount,
-        client_notes: formData.client_notes.trim() || undefined
+        total_amount: totalAmount
       });
 
       const booking: Booking = {
@@ -287,8 +285,7 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         client_phone: formData.client_phone,
         date: formData.date,
         services: formData.selectedServices,
-        total_amount: totalAmount,
-        client_notes: formData.client_notes.trim() || undefined
+        total_amount: totalAmount
       };
       
       // Save last used prices to localStorage and state
@@ -432,24 +429,6 @@ export default function BookingForm({ onClose, onSuccess, language, translations
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
               />
-            </div>
-
-            <div className="space-y-2 lg:space-y-3">
-              <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
-                {t.clientNotes || "Client Notes"}
-              </label>
-              <textarea 
-                placeholder={t.clientNotesPlaceholder || "Enter any special instructions (e.g., sensitive skin, allergies...)"}
-                value={formData.client_notes}
-                onChange={(e) => setFormData({ ...formData, client_notes: e.target.value.slice(0, 500) })}
-                rows={3}
-                className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base resize-none"
-              />
-              <div className="flex justify-end">
-                <span className="text-[10px] text-[#8E8E8E] font-medium">
-                  {formData.client_notes.length}/500
-                </span>
-              </div>
             </div>
 
             {/* Service Multi-select */}

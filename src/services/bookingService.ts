@@ -63,7 +63,6 @@ export async function saveBooking(data: any) {
       services: data.services || [],
       total_amount: data.total_amount || data.price || 0,
       date: data.date || new Date().toISOString().split('T')[0],
-      client_notes: data.client_notes || null,
       createdAt: serverTimestamp()
     };
     

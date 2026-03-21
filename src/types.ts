@@ -42,7 +42,6 @@ export interface Booking {
   services: BookingService[];
   total_amount: number;
   created_at?: string;
-  client_notes?: string;
 }
 
 export interface Client {
@@ -62,7 +61,6 @@ export interface IncomeEntry {
   clientName: string;
   clientPhone?: string;
   services?: BookingService[];
-  clientNotes?: string;
 }
 
 export const OCCASIONS = [

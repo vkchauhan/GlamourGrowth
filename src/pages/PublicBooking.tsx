@@ -50,7 +50,6 @@ const PublicBooking: React.FC = () => {
       setPhoneError('');
     }
   };
-  const [clientNotes, setClientNotes] = useState('');
 
   useEffect(() => {
     fetchArtistData();
@@ -119,8 +118,7 @@ const PublicBooking: React.FC = () => {
         booking_time: selectedTime,
         services: selectedService ? [selectedService] : [],
         price: selectedService?.price || 0,
-        artist_id: artistId,
-        client_notes: clientNotes.trim()
+        artist_id: artistId
       });
       setConfirmed(true);
     } catch (error) {
@@ -162,12 +160,6 @@ const PublicBooking: React.FC = () => {
               <span className="text-gray-500">Time:</span>
               <span className="font-bold text-gray-900">{selectedTime}</span>
             </div>
-            {clientNotes && (
-              <div className="pt-2 border-t border-gray-100">
-                <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Your Notes:</span>
-                <p className="text-xs text-gray-600 italic">"{clientNotes}"</p>
-              </div>
-            )}
           </div>
           <button
             onClick={() => window.location.reload()}
@@ -350,20 +342,6 @@ const PublicBooking: React.FC = () => {
                     {phoneError && (
                       <p className="text-xs text-red-500 font-medium mt-1">{phoneError}</p>
                     )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Special Instructions (Optional)</label>
-                    <textarea
-                      value={clientNotes}
-                      onChange={(e) => setClientNotes(e.target.value.slice(0, 500))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px]"
-                      placeholder="Any allergies, skin sensitivity, or preferences?"
-                    />
-                    <div className="flex justify-end mt-1">
-                      <span className={`text-[10px] ${clientNotes.length >= 500 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
-                        {clientNotes.length}/500
-                      </span>
-                    </div>
                   </div>
                   <button
                     type="submit"

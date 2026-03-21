@@ -23,7 +23,6 @@
           }
         },
         "status": { "type": "string", "enum": ["confirmed", "pending", "cancelled"] },
-        "client_notes": { "type": "string", "description": "Special instructions or important information about the client" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "date", "price"]
