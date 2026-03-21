@@ -1,5 +1,14 @@
 import { initializeApp, getApp, getApps, FirebaseApp } from "firebase/app";
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, User, Auth } from "firebase/auth";
+import { 
+  getAuth, 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber, 
+  signInWithPopup,
+  GoogleAuthProvider,
+  ConfirmationResult, 
+  User, 
+  Auth 
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import firebaseConfig from "../../firebase-applet-config.json";
 
@@ -14,6 +23,7 @@ function getFirebaseApp(): FirebaseApp {
 const app = getFirebaseApp();
 export const auth = getAuth(app);
 export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
+export const googleProvider = new GoogleAuthProvider();
 
-export { RecaptchaVerifier, signInWithPhoneNumber };
+export { RecaptchaVerifier, signInWithPhoneNumber, signInWithPopup, GoogleAuthProvider };
 export type { ConfirmationResult, User };

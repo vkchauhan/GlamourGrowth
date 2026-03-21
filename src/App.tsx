@@ -38,7 +38,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { AppTab, IncomeEntry, OCCASIONS, Language } from "./types";
 import { geminiService } from "./services/geminiService";
-import { getBookings, deleteBooking } from "./services/bookingService";
+import { getBookings, deleteBooking, subscribeToBookings } from "./services/bookingService";
 import { auth, db } from "./services/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -179,30 +179,26 @@ export default function App() {
 
   // Load data from Firestore
   useEffect(() => {
-    const fetchBookings = async () => {
-      if (!user) return;
-      try {
-        const data = await getBookings();
-        // Map Firestore data to IncomeEntry format
-        const mapped: IncomeEntry[] = data.map((b: any) => ({
-          id: b.booking_id,
-          date: b.date,
-          amount: b.price,
-          category: b.services?.[0]?.name || "General",
-          clientName: b.name,
-          services: b.services,
-          clientNotes: b.client_notes
-        }));
-        setIncomeEntries(mapped);
-      } catch (e) {
-        console.error("Failed to fetch bookings from Firestore", e);
-        const saved = localStorage.getItem("glamour_growth_income");
-        if (saved) {
-          setIncomeEntries(JSON.parse(saved));
-        }
-      }
-    };
-    fetchBookings();
+    if (!user) {
+      setIncomeEntries([]);
+      return;
+    }
+    
+    const unsubscribe = subscribeToBookings((data) => {
+      // Map Firestore data to IncomeEntry format
+      const mapped: IncomeEntry[] = data.map((b: any) => ({
+        id: b.booking_id,
+        date: b.date,
+        amount: b.total_amount || b.price || 0,
+        category: b.services?.[0]?.name || "General",
+        clientName: b.client_name || b.name || "Unknown Client",
+        services: b.services || [],
+        clientNotes: b.client_notes
+      }));
+      setIncomeEntries(mapped);
+    });
+    
+    return () => unsubscribe();
   }, [user]);
 
   // Save data to localStorage
@@ -231,17 +227,6 @@ export default function App() {
   }, [incomeEntries, t]);
 
   const handleAddBooking = (booking: Booking) => {
-    const entry: IncomeEntry = {
-      id: booking.booking_id || crypto.randomUUID(),
-      date: booking.date,
-      amount: booking.total_amount,
-      category: booking.services[0]?.name || "General",
-      clientName: booking.client_name,
-      services: booking.services,
-      clientNotes: booking.client_notes
-    };
-    
-    setIncomeEntries([entry, ...incomeEntries]);
     setIsAddingIncome(false);
     
     // Background Sync registration
@@ -253,11 +238,8 @@ export default function App() {
   const deleteEntry = async (id: string) => {
     try {
       await deleteBooking(id);
-      setIncomeEntries(incomeEntries.filter(e => e.id !== id));
     } catch (e) {
       console.error("Failed to delete booking from Firestore", e);
-      // Fallback to local delete if Firestore fails
-      setIncomeEntries(incomeEntries.filter(e => e.id !== id));
     }
   };
 

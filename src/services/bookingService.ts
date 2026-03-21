@@ -1,4 +1,4 @@
-import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, deleteDoc, doc, setDoc, getDoc, where, limit, startAt, endAt } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, deleteDoc, doc, setDoc, getDoc, where, limit, startAt, endAt, onSnapshot } from "firebase/firestore";
 import { db, auth } from "./firebase";
 
 import { Booking, Service, BookingService, Client } from "../types";
@@ -147,6 +147,19 @@ export async function getBookings() {
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, "bookings");
   }
+}
+
+export function subscribeToBookings(callback: (bookings: any[]) => void) {
+  const q = query(collection(db, "bookings"), orderBy("createdAt", "desc"));
+  return onSnapshot(q, (snapshot) => {
+    const bookings = snapshot.docs.map(doc => ({
+      booking_id: doc.id,
+      ...doc.data()
+    }));
+    callback(bookings);
+  }, (error) => {
+    handleFirestoreError(error, OperationType.LIST, "bookings");
+  });
 }
 
 export async function deleteBooking(id: string) {
