@@ -106,8 +106,11 @@ export default function App() {
   const [clientContext, setClientContext] = useState("");
 
   const [insights, setInsights] = useState<any>(null);
-
   const [loadingInsights, setLoadingInsights] = useState(false);
+  const [dismissedNudges, setDismissedNudges] = useState<string[]>(() => {
+    const saved = localStorage.getItem("glamour_growth_dismissed_nudges");
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isListening, setIsListening] = useState(false);
@@ -213,6 +216,12 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("glamour_growth_lang", language);
   }, [language]);
+
+  const handleDismissNudge = (nudgeId: string) => {
+    const updated = [...dismissedNudges, nudgeId];
+    setDismissedNudges(updated);
+    localStorage.setItem("glamour_growth_dismissed_nudges", JSON.stringify(updated));
+  };
 
   const totalIncome = useMemo(() => 
     incomeEntries.reduce((sum, entry) => sum + entry.amount, 0),
@@ -489,7 +498,8 @@ export default function App() {
 
                 {/* Smart Nudges Section */}
                 {(() => {
-                  const nudges = nudgeService.generateNudges(incomeEntries);
+                  const allNudges = nudgeService.generateNudges(incomeEntries);
+                  const nudges = allNudges.filter(n => !dismissedNudges.includes(n.id));
                   if (nudges.length === 0) return null;
                   
                   return (
@@ -517,13 +527,15 @@ export default function App() {
                                 {language === Language.HI ? nudge.message_hi : nudge.message_en}
                               </p>
                               
-                              <button
-                                onClick={() => shareOnWhatsApp(language === Language.HI ? nudge.whatsapp_text_hi : nudge.whatsapp_text_en)}
-                                className="mt-4 flex items-center gap-2 px-6 py-2.5 bg-[#25D366] text-white rounded-full text-xs font-bold hover:bg-[#128C7E] transition-all shadow-lg shadow-[#25D366]/20"
-                              >
-                                <MessageCircle className="w-4 h-4 fill-current" />
-                                {language === Language.HI ? "WhatsApp पर भेजें" : "Send on WhatsApp"}
-                              </button>
+                              <div className="flex items-center gap-3 mt-4">
+                                <button
+                                  onClick={() => handleDismissNudge(nudge.id)}
+                                  className="flex items-center gap-2 px-6 py-2.5 bg-premium-ink text-white rounded-full text-xs font-bold hover:bg-[#333] transition-all"
+                                >
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  {t.done || "Done"}
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </motion.div>

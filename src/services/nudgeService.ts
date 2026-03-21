@@ -44,9 +44,27 @@ export const nudgeService = {
           date: booking.date
         });
       }
+
+      // 3. Upcoming event reminder (for tomorrow)
+      const tomorrow = subDays(today, -1);
+      if (isSameDay(bookingDate, tomorrow)) {
+        nudges.push({
+          id: `reminder-${booking.id}`,
+          type: 'upcoming_reminder',
+          title_en: "Reminder: " + booking.clientName,
+          title_hi: "रिमाइंडर: " + booking.clientName,
+          message_en: `${booking.clientName} has a session tomorrow. Send a quick reminder?`,
+          message_hi: `${booking.clientName} का कल सेशन है। क्या आप उन्हें एक रिमाइंडर भेजना चाहेंगे?`,
+          whatsapp_text_en: `Hi ${booking.clientName}, just a quick reminder for our session tomorrow! I'm looking forward to it. See you then!`,
+          whatsapp_text_hi: `नमस्ते ${booking.clientName}, कल के हमारे सेशन के लिए एक छोटा सा रिमाइंडर! मैं इसके लिए बहुत उत्साहित हूँ। कल मिलते हैं!`,
+          client_name: booking.clientName,
+          client_phone: booking.clientPhone,
+          date: booking.date
+        });
+      }
     });
 
-    // Return only the most relevant nudges (limit to 2)
-    return nudges.slice(0, 2);
+    // Sort nudges by date (most recent first) and return only the most relevant nudges (limit to 2)
+    return nudges.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 2);
   }
 };
