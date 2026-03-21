@@ -152,8 +152,9 @@ export default function Login({ language, setLanguage, onLoginSuccess }: LoginPr
     }
   };
 
-  const handleVerifyOtp = async () => {
-    if (!otp || otp.length < 6) {
+  const handleVerifyOtp = async (otpValue?: string | React.MouseEvent) => {
+    const code = typeof otpValue === 'string' ? otpValue : otp;
+    if (!code || code.length < 6) {
       setError(t.invalidOtp);
       return;
     }
@@ -163,7 +164,7 @@ export default function Login({ language, setLanguage, onLoginSuccess }: LoginPr
 
     try {
       if (confirmationResult) {
-        const result = await confirmationResult.confirm(otp);
+        const result = await confirmationResult.confirm(code);
         onLoginSuccess(result.user);
       }
     } catch (err: any) {
@@ -173,6 +174,29 @@ export default function Login({ language, setLanguage, onLoginSuccess }: LoginPr
       setLoading(false);
     }
   };
+
+  // WebOTP API implementation
+  useEffect(() => {
+    if (step === "otp" && 'OTPCredential' in window) {
+      const ac = new AbortController();
+      
+      (navigator.credentials as any).get({
+        otp: { transport: ['sms'] },
+        signal: ac.signal
+      }).then((otp: any) => {
+        if (otp && otp.code) {
+          setOtp(otp.code);
+          handleVerifyOtp(otp.code);
+        }
+      }).catch((err: any) => {
+        console.log("WebOTP Error or Aborted:", err);
+      });
+
+      return () => {
+        ac.abort();
+      };
+    }
+  }, [step]);
 
   return (
     <div className="min-h-screen bg-premium-bg flex items-center justify-center p-4">
@@ -225,6 +249,8 @@ export default function Login({ language, setLanguage, onLoginSuccess }: LoginPr
                     placeholder="9876543210"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
+                    autoComplete="tel"
+                    inputMode="tel"
                     className="w-full p-5 pl-14 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium"
                   />
                 </div>
@@ -320,6 +346,8 @@ export default function Login({ language, setLanguage, onLoginSuccess }: LoginPr
                     maxLength={6}
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
                     className="w-full p-5 pl-14 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium tracking-[0.5em] text-center"
                   />
                 </div>
