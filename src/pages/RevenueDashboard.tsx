@@ -42,19 +42,18 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 interface RevenueDashboardProps {
   onClose?: () => void;
+  bookings: any[];
 }
 
-const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose }) => {
+const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings }) => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState<RevenueData | null>(null);
   const [dateRange, setDateRange] = useState('this-month');
   const [customRange, setCustomRange] = useState({ from: '', to: '' });
 
-  const fetchRevenueData = async () => {
-    setLoading(true);
-    try {
-      let url = '/api/analytics/revenue';
+  useEffect(() => {
+    const calculateAnalytics = () => {
       let from = '';
       let to = format(new Date(), 'yyyy-MM-dd');
 
@@ -69,23 +68,85 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose }) => {
         to = customRange.to;
       }
 
-      if (from) {
-        url += `?from=${from}&to=${to}`;
-      }
+      // Filter bookings by date range
+      const filteredBookings = bookings.filter(b => {
+        if (!from) return true;
+        return b.date >= from && b.date <= to;
+      });
 
-      const response = await fetch(url);
-      const result = await response.json();
-      setData(result);
-    } catch (error) {
-      console.error('Error fetching revenue data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Aggregation logic (similar to backend)
+      let totalRevenue = 0;
+      const byServiceMap: Record<string, number> = {};
+      const byMonthMap: Record<string, number> = {};
+      const clientRevenueMap: Record<string, number> = {};
+      const clientBookingCount: Record<string, number> = {};
 
-  useEffect(() => {
-    fetchRevenueData();
-  }, [dateRange, customRange]);
+      filteredBookings.forEach(b => {
+        const revenue = b.amount || b.total_amount || b.price || 0;
+        totalRevenue += revenue;
+
+        // By Service
+        if (b.services && Array.isArray(b.services) && b.services.length > 0) {
+          b.services.forEach((s: any) => {
+            const serviceName = s.name || "Unknown";
+            const servicePrice = s.price || 0;
+            byServiceMap[serviceName] = (byServiceMap[serviceName] || 0) + servicePrice;
+          });
+        } else {
+          const serviceName = b.category || "General";
+          byServiceMap[serviceName] = (byServiceMap[serviceName] || 0) + revenue;
+        }
+
+        // By Month
+        const dateStr = b.date || "";
+        if (dateStr.length >= 7) {
+          const month = dateStr.substring(0, 7); // YYYY-MM
+          byMonthMap[month] = (byMonthMap[month] || 0) + revenue;
+        }
+
+        // Top Clients
+        const clientName = b.clientName || b.client_name || b.name || "Unknown";
+        clientRevenueMap[clientName] = (clientRevenueMap[clientName] || 0) + revenue;
+        clientBookingCount[clientName] = (clientBookingCount[clientName] || 0) + 1;
+      });
+
+      const byService = Object.entries(byServiceMap).map(([service, revenue]) => ({ service, revenue }))
+        .sort((a, b) => b.revenue - a.revenue);
+      
+      const byMonth = Object.entries(byMonthMap).map(([month, revenue]) => ({ month, revenue }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+
+      const topClients = Object.entries(clientRevenueMap).map(([name, revenue]) => ({ name, revenue }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+
+      let repeatRevenue = 0;
+      let newRevenue = 0;
+      Object.entries(clientBookingCount).forEach(([name, count]) => {
+        if (count > 1) {
+          repeatRevenue += clientRevenueMap[name];
+        } else {
+          newRevenue += clientRevenueMap[name];
+        }
+      });
+
+      const averageBookingValue = filteredBookings.length > 0 ? totalRevenue / filteredBookings.length : 0;
+
+      setData({
+        totalRevenue,
+        byService,
+        byMonth,
+        topClients,
+        repeatVsNew: {
+          repeat: repeatRevenue,
+          new: newRevenue
+        },
+        averageBookingValue
+      });
+    };
+
+    calculateAnalytics();
+  }, [dateRange, customRange, bookings]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {

@@ -875,7 +875,10 @@ export default function App() {
                 exit={{ opacity: 0, x: -20 }}
                 className="absolute inset-0 z-50 bg-slate-50 overflow-y-auto"
               >
-                <RevenueDashboard onClose={() => setActiveTab(AppTab.DASHBOARD)} />
+                <RevenueDashboard 
+                  bookings={incomeEntries} 
+                  onClose={() => setActiveTab(AppTab.DASHBOARD)} 
+                />
               </motion.div>
             )}
           </AnimatePresence>
