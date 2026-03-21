@@ -144,6 +144,23 @@ export default function BookingForm({ onClose, onSuccess, language, translations
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+
+  const validatePhone = (phone: string) => {
+    if (!phone) return true;
+    const digits = phone.replace(/\D/g, '');
+    return digits.length === 10;
+  };
+
+  const handlePhoneChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 10);
+    setFormData({ ...formData, client_phone: digits });
+    if (digits && digits.length !== 10) {
+      setPhoneError(t.invalidPhone || "Please enter a valid 10-digit phone number");
+    } else {
+      setPhoneError('');
+    }
+  };
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -245,6 +262,11 @@ export default function BookingForm({ onClose, onSuccess, language, translations
 
   const handleSubmit = async () => {
     if (!formData.client_name || formData.selectedServices.length === 0) return;
+    
+    if (!validatePhone(formData.client_phone)) {
+      setPhoneError(t.invalidPhone || "Please enter a valid 10-digit phone number");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -385,9 +407,17 @@ export default function BookingForm({ onClose, onSuccess, language, translations
                   type="tel" 
                   placeholder="98XXXXXXXX"
                   value={formData.client_phone}
-                  onChange={(e) => setFormData({ ...formData, client_phone: e.target.value })}
-                  className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  className={cn(
+                    "w-full p-4 lg:p-5 rounded-2xl border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base transition-colors",
+                    phoneError ? "border-red-500 focus:border-red-500" : "border-premium-border focus:border-premium-gold"
+                  )}
                 />
+                {phoneError && (
+                  <p className="text-[10px] text-red-500 font-bold mt-1 animate-in fade-in slide-in-from-top-1">
+                    {phoneError}
+                  </p>
+                )}
               </div>
             </div>
 

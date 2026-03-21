@@ -33,6 +33,23 @@ const PublicBooking: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+
+  const validatePhone = (phone: string) => {
+    if (!phone) return true;
+    const digits = phone.replace(/\D/g, '');
+    return digits.length === 10;
+  };
+
+  const handlePhoneChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 10);
+    setClientPhone(digits);
+    if (digits && digits.length !== 10) {
+      setPhoneError("Please enter a valid 10-digit mobile number");
+    } else {
+      setPhoneError('');
+    }
+  };
   const [clientNotes, setClientNotes] = useState('');
 
   useEffect(() => {
@@ -87,6 +104,12 @@ const PublicBooking: React.FC = () => {
 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validatePhone(clientPhone)) {
+      setPhoneError("Please enter a valid 10-digit mobile number");
+      return;
+    }
+
     setBookingLoading(true);
     try {
       await saveBooking({
@@ -316,13 +339,17 @@ const PublicBooking: React.FC = () => {
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                       <input
                         type="tel"
-                        required
                         value={clientPhone}
-                        onChange={(e) => setClientPhone(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="Enter your mobile number"
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:outline-none transition-colors ${
+                          phoneError ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                        }`}
+                        placeholder="Enter your 10-digit mobile number"
                       />
                     </div>
+                    {phoneError && (
+                      <p className="text-xs text-red-500 font-medium mt-1">{phoneError}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Special Instructions (Optional)</label>
