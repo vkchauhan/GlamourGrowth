@@ -352,7 +352,7 @@ export default function App() {
             className="bg-white px-3 py-1.5 rounded-full border border-premium-border shadow-sm flex items-center gap-1 hover:bg-premium-bg transition-colors active:scale-95"
           >
             <IndianRupee className="w-3 h-3 text-premium-gold" />
-            <span className="text-xs font-bold">{totalIncome.toLocaleString('en-IN')}</span>
+            <span className="text-xs font-bold">{(totalIncome || 0).toLocaleString('en-IN')}</span>
           </button>
           <button 
             onClick={handleLogout}
@@ -440,7 +440,7 @@ export default function App() {
             <p className="text-[10px] uppercase tracking-[0.15em] text-[#8E8E8E] font-bold mb-2 group-hover:text-premium-gold transition-colors">{t.totalRevenue}</p>
             <p className="text-2xl font-serif font-bold flex items-center gap-1">
               <IndianRupee className="w-5 h-5 text-premium-gold" />
-              {totalIncome.toLocaleString('en-IN')}
+              {(totalIncome || 0).toLocaleString('en-IN')}
             </p>
           </button>
           <button 
@@ -526,7 +526,7 @@ export default function App() {
                     <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.avgTicketSize}</p>
                     <p className="text-3xl lg:text-5xl font-serif font-medium flex items-center gap-1">
                       <IndianRupee className="w-6 lg:w-8 h-6 lg:h-8 text-premium-gold" />
-                      {incomeEntries.length ? Math.round(totalIncome / incomeEntries.length).toLocaleString('en-IN') : 0}
+                      {incomeEntries.length ? Math.round((totalIncome || 0) / incomeEntries.length).toLocaleString('en-IN') : 0}
                     </p>
                   </div>
                   <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm hover:shadow-md transition-shadow">
@@ -547,7 +547,7 @@ export default function App() {
 
                 <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[48px] border border-premium-border shadow-sm h-[350px] lg:h-[450px] flex flex-col">
                   <h3 className="text-lg lg:text-xl font-serif font-bold mb-6 lg:mb-8 italic">{t.revenueTrend}</h3>
-                  <div className="flex-1 min-h-0 w-full">
+                  <div className="flex-1 min-h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                       <BarChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0F0F0" />
@@ -609,7 +609,7 @@ export default function App() {
                           <div className="flex items-center gap-4 lg:gap-8">
                             <p className="text-lg lg:text-xl font-serif font-bold flex items-center gap-1">
                               <IndianRupee className="w-3 lg:w-4 h-3 lg:h-4 text-premium-gold" />
-                              {entry.amount.toLocaleString('en-IN')}
+                              {(entry.amount || 0).toLocaleString('en-IN')}
                             </p>
                             <button 
                               onClick={() => deleteEntry(entry.id)}

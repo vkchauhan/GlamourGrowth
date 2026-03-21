@@ -92,7 +92,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose }) => {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0
-    }).format(value);
+    }).format(value || 0);
   };
 
   if (loading && !data) {
