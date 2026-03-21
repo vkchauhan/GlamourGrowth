@@ -241,7 +241,7 @@ export const saveExpense = async (expense: any) => {
   try {
     const docRef = await addDoc(collection(db, "expenses"), {
       ...expense,
-      createdAt: new Date().toISOString()
+      createdAt: expense.createdAt || new Date().toISOString()
     });
     return docRef.id;
   } catch (error) {

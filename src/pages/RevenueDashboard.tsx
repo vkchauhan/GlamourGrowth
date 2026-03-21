@@ -354,7 +354,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings, 
               Profit vs Expenses Trend
             </h3>
             <div className="h-80 w-full min-h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <LineChart data={data?.byMonth || []}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis 

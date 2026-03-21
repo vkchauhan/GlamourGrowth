@@ -62,10 +62,14 @@ service cloud.firestore {
     }
 
     function isValidExpense(data) {
-      return data.user_id is string && data.user_id == request.auth.uid &&
+      return data.keys().hasAll(['user_id', 'amount', 'category', 'date', 'createdAt']) &&
+             data.keys().hasOnly(['user_id', 'amount', 'category', 'date', 'notes', 'createdAt']) &&
+             data.user_id is string && data.user_id == request.auth.uid &&
              data.amount is number && data.amount > 0 &&
              data.category is string && data.category.size() > 0 &&
-             data.date is string && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$');
+             data.date is string && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
+             data.createdAt is string &&
+             (!('notes' in data) || data.notes is string);
     }
 
     // Bookings: Anyone can create (public booking), but only authenticated users can read/update/delete
@@ -110,7 +114,13 @@ service cloud.firestore {
 
     // Expenses: Only owner can read/write
     match /expenses/{expenseId} {
-      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid) && (request.resource == null || isValidExpense(request.resource.data));
+      allow read: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow create: if isAuthenticated() && isValidExpense(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.user_id == request.auth.uid && 
+                      isValidExpense(request.resource.data) &&
+                      request.resource.data.user_id == resource.data.user_id &&
+                      request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
     }
   }
 }
