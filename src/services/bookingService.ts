@@ -95,6 +95,7 @@ export async function saveBooking(data: any) {
         if (clientSnap.empty) {
           await addDoc(collection(db, "clients"), {
             name: bookingData.client_name,
+            name_lowercase: bookingData.client_name.toLowerCase(),
             phone: bookingData.client_phone,
             createdAt: serverTimestamp(),
             lastBookingAt: serverTimestamp(),
@@ -108,6 +109,7 @@ export async function saveBooking(data: any) {
           // Update existing client's stats
           const clientDoc = clientSnap.docs[0];
           await updateDoc(clientDoc.ref, {
+            name_lowercase: bookingData.client_name.toLowerCase(),
             lastBookingAt: serverTimestamp(),
             totalSpend: increment(bookingData.total_amount),
             visitCount: increment(1)
@@ -126,16 +128,31 @@ export async function searchClients(queryText: string): Promise<Client[]> {
   try {
     if (!queryText || queryText.length < 2) return [];
     
-    // Simple prefix search for name
-    const q = query(
+    const lowerQuery = queryText.toLowerCase();
+    
+    // Try searching by name_lowercase first
+    let q = query(
       collection(db, "clients"),
-      orderBy("name"),
-      startAt(queryText),
-      endAt(queryText + '\uf8ff'),
+      orderBy("name_lowercase"),
+      startAt(lowerQuery),
+      endAt(lowerQuery + '\uf8ff'),
       limit(10)
     );
     
-    const querySnapshot = await getDocs(q);
+    let querySnapshot = await getDocs(q);
+    
+    // If no results, try the original name field (for legacy data)
+    if (querySnapshot.empty) {
+      // We can't easily do case-insensitive prefix search on the original name field in Firestore
+      // So we'll fetch a few and filter in memory as a fallback
+      const fallbackQ = query(collection(db, "clients"), limit(100));
+      const fallbackSnap = await getDocs(fallbackQ);
+      return fallbackSnap.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as Client))
+        .filter(c => c.name.toLowerCase().startsWith(lowerQuery))
+        .slice(0, 10);
+    }
+    
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()

@@ -107,17 +107,32 @@ async function startServer() {
       return res.json([]);
     }
 
+    const lowerQuery = queryText.toLowerCase();
+
     try {
-      // Simple prefix search for name
-      const q = query(
+      // Try searching by name_lowercase first
+      let q = query(
         collection(db, "clients"),
-        orderBy("name"),
-        startAt(queryText),
-        endAt(queryText + '\uf8ff'),
+        orderBy("name_lowercase"),
+        startAt(lowerQuery),
+        endAt(lowerQuery + '\uf8ff'),
         limit(10)
       );
       
-      const querySnapshot = await getDocs(q);
+      let querySnapshot = await getDocs(q);
+      
+      // If no results, it might be legacy data without name_lowercase
+      // Fetch a larger batch and filter in memory for case-insensitive prefix match
+      if (querySnapshot.empty) {
+        const fallbackQ = query(collection(db, "clients"), limit(100));
+        const fallbackSnap = await getDocs(fallbackQ);
+        const clients = fallbackSnap.docs
+          .map(doc => ({ id: doc.id, ...doc.data() } as any))
+          .filter(c => (c.name && c.name.toLowerCase().startsWith(lowerQuery)))
+          .slice(0, 10);
+        return res.json(clients);
+      }
+      
       const clients = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
