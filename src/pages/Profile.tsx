@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { toBlob } from 'html-to-image';
 import { 
   User, 
   Briefcase, 
@@ -26,9 +27,12 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ language, translations: t, onClose }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const modalCardRef = useRef<HTMLDivElement>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showCard, setShowCard] = useState(false);
 
@@ -119,18 +123,63 @@ const Profile: React.FC<ProfileProps> = ({ language, translations: t, onClose })
     }
   };
 
-  const shareBusinessCard = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: `${profile?.name} - Professional Makeup Artist`,
-        text: `Check out my professional profile on Glamour Growth! I specialize in ${profile?.expertise.join(', ')}.`,
-        url: window.location.href
-      }).catch(console.error);
-    } else {
-      // Fallback: Copy to clipboard
+  const shareBusinessCard = async () => {
+    const targetRef = showCard ? modalCardRef : cardRef;
+    if (!targetRef.current) return;
+
+    setSharing(true);
+    try {
+      // Capture the card as a blob
+      const blob = await toBlob(targetRef.current, {
+        cacheBust: true,
+        backgroundColor: '#141414', // Match premium-ink
+        style: {
+          borderRadius: '40px',
+        }
+      });
+
+      if (!blob) throw new Error('Failed to capture card image');
+
+      const file = new File([blob], 'business-card.png', { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `${profile?.name || 'My'} Business Card`,
+          text: `Check out my professional profile!`,
+        });
+      } else {
+        // Fallback: Download the image
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${profile?.name || 'artist'}-business-card.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        // Also copy text as secondary fallback
+        const text = `${profile?.name} - Professional Makeup Artist\nSpecialist in: ${profile?.expertise.join(', ')}\nExperience: ${profile?.experience} Years\nAreas: ${profile?.areas.join(', ')}`;
+        navigator.clipboard.writeText(text);
+        alert("Card downloaded and details copied to clipboard!");
+      }
+    } catch (error) {
+      console.error('Error sharing business card:', error);
+      // Final fallback to text-only share if image capture fails
       const text = `${profile?.name} - Professional Makeup Artist\nSpecialist in: ${profile?.expertise.join(', ')}\nExperience: ${profile?.experience} Years\nAreas: ${profile?.areas.join(', ')}`;
-      navigator.clipboard.writeText(text);
-      alert("Business card details copied to clipboard!");
+      if (navigator.share) {
+        navigator.share({
+          title: `${profile?.name} - Professional Makeup Artist`,
+          text: text,
+          url: window.location.href
+        }).catch(console.error);
+      } else {
+        navigator.clipboard.writeText(text);
+        alert("Business card details copied to clipboard!");
+      }
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -303,7 +352,7 @@ const Profile: React.FC<ProfileProps> = ({ language, translations: t, onClose })
             <h4 className="text-[10px] uppercase tracking-[0.25em] text-premium-gold font-bold px-2">Preview</h4>
             
             {/* Digital Business Card */}
-            <div className="relative aspect-[3/4] w-full max-w-[320px] mx-auto bg-premium-ink rounded-[40px] overflow-hidden shadow-2xl group">
+            <div ref={cardRef} className="relative aspect-[3/4] w-full max-w-[320px] mx-auto bg-premium-ink rounded-[40px] overflow-hidden shadow-2xl group">
               {/* Background Pattern */}
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#D4AF37_0%,transparent_70%)]" />
@@ -360,9 +409,14 @@ const Profile: React.FC<ProfileProps> = ({ language, translations: t, onClose })
 
             <button 
               onClick={shareBusinessCard}
-              className="w-full max-w-[320px] mx-auto bg-white border border-premium-border p-5 rounded-3xl flex items-center justify-center gap-3 font-bold hover:bg-premium-bg transition-all shadow-sm group"
+              disabled={sharing}
+              className="w-full max-w-[320px] mx-auto bg-white border border-premium-border p-5 rounded-3xl flex items-center justify-center gap-3 font-bold hover:bg-premium-bg transition-all shadow-sm group disabled:opacity-50"
             >
-              <Share2 className="w-5 h-5 text-premium-gold group-hover:scale-110 transition-transform" />
+              {sharing ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-premium-gold"></div>
+              ) : (
+                <Share2 className="w-5 h-5 text-premium-gold group-hover:scale-110 transition-transform" />
+              )}
               {t.shareCard}
             </button>
           </div>
@@ -386,6 +440,7 @@ const Profile: React.FC<ProfileProps> = ({ language, translations: t, onClose })
             </button>
 
             <motion.div
+              ref={modalCardRef}
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               className="w-full max-w-md aspect-[3/4] bg-premium-ink rounded-[48px] overflow-hidden shadow-[0_0_100px_rgba(212,175,55,0.2)] relative"
@@ -460,9 +515,26 @@ const Profile: React.FC<ProfileProps> = ({ language, translations: t, onClose })
                         <span className="text-sm">{auth.currentUser?.phoneNumber || 'Contact Me'}</span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[8px] uppercase tracking-[0.4em] text-white/20 mb-2">Powered by</p>
-                      <p className="text-xs font-serif italic text-white/40">Glamour Growth</p>
+                    <div className="flex flex-col items-end gap-4">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          shareBusinessCard();
+                        }}
+                        disabled={sharing}
+                        className="bg-white/10 hover:bg-white/20 p-4 rounded-2xl transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-widest disabled:opacity-50"
+                      >
+                        {sharing ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-premium-gold"></div>
+                        ) : (
+                          <Share2 className="w-4 h-4 text-premium-gold" />
+                        )}
+                        {t.shareCard}
+                      </button>
+                      <div className="text-right">
+                        <p className="text-[8px] uppercase tracking-[0.4em] text-white/20 mb-2">Powered by</p>
+                        <p className="text-xs font-serif italic text-white/40">Glamour Growth</p>
+                      </div>
                     </div>
                   </div>
                 </div>
