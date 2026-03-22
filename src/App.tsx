@@ -616,40 +616,29 @@ export default function App() {
                   );
                 })()}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
-                  <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm hover:shadow-md transition-shadow">
-                    <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.businessInsight}</p>
-                    <p className="text-sm lg:text-base font-light italic text-[#666]">
-                      {(() => {
-                        const insights = BookingInsightsService.analyze(incomeEntries.map(e => ({
-                          booking_id: e.id,
-                          client_name: e.clientName,
-                          date: e.date,
-                          total_amount: e.amount,
-                          services: e.services || []
-                        } as Booking)));
-                        
-                        if (insights.bookings_last_30_days === 0) return t.noRecentBookingsInsight || "No bookings this month. Try promoting your services!";
-                        
-                        let action = "";
-                        if (insights.most_common_service?.toLowerCase().includes("bridal")) {
-                          action = t.promoteBridalAction || "Promote your bridal services to get more clients.";
-                        } else {
-                          action = t.promoteServicesAction || "Share your work on social media to attract new clients.";
-                        }
-
-                        return t.bookingsInsight.replace("{{count}}", insights.bookings_last_30_days.toString()).replace("{{action}}", action);
-                      })()}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
+                  <button 
+                    onClick={() => setActiveTab(AppTab.REVENUE)}
+                    className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm hover:shadow-md transition-all text-left group"
+                  >
+                    <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3 group-hover:text-premium-gold transition-colors">{t.totalRevenue}</p>
+                    <p className="text-3xl lg:text-5xl font-serif font-medium flex items-center gap-1">
+                      <IndianRupee className="w-6 lg:w-8 h-6 lg:h-8 text-premium-gold" />
+                      {(totalIncome || 0).toLocaleString('en-IN')}
                     </p>
+                  </button>
+                  <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm">
+                    <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.totalBookings}</p>
+                    <p className="text-3xl lg:text-5xl font-serif font-medium">{incomeEntries.length}</p>
                   </div>
-                  <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm hover:shadow-md transition-shadow">
+                  <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm">
                     <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.avgTicketSize}</p>
                     <p className="text-3xl lg:text-5xl font-serif font-medium flex items-center gap-1">
                       <IndianRupee className="w-6 lg:w-8 h-6 lg:h-8 text-premium-gold" />
                       {incomeEntries.length ? Math.round((totalIncome || 0) / incomeEntries.length).toLocaleString('en-IN') : 0}
                     </p>
                   </div>
-                  <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm hover:shadow-md transition-shadow">
+                  <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm">
                     <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.topCategory}</p>
                     <p className="text-3xl lg:text-5xl font-serif font-medium">
                       {incomeEntries.length ? 
@@ -663,6 +652,55 @@ export default function App() {
                         : "N/A"}
                     </p>
                   </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h3 className="text-lg lg:text-xl font-serif font-bold italic">{t.businessDashboards || "Business Dashboards"}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { id: AppTab.REVENUE, label: t.totalRevenue, icon: IndianRupee },
+                      { id: AppTab.CLIENTS, label: t.beautyLog, icon: Users },
+                      { id: AppTab.INSIGHTS, label: t.growthInsights, icon: TrendingUp },
+                      { id: AppTab.STRATEGY, label: t.festivalStrategy, icon: LayoutDashboard },
+                    ].map(dash => (
+                      <button
+                        key={dash.id}
+                        onClick={() => setActiveTab(dash.id)}
+                        className="p-6 bg-white border border-premium-border rounded-[32px] flex flex-col items-center gap-3 hover:bg-premium-bg transition-all group"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-premium-gold/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <dash.icon className="w-6 h-6 text-premium-gold" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E8E] group-hover:text-premium-ink text-center">{dash.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm hover:shadow-md transition-shadow">
+                  <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.businessInsight}</p>
+                  <p className="text-sm lg:text-base font-light italic text-[#666]">
+                    {(() => {
+                      const insights = BookingInsightsService.analyze(incomeEntries.map(e => ({
+                        booking_id: e.id,
+                        client_name: e.clientName,
+                        date: e.date,
+                        total_amount: e.amount,
+                        services: e.services || []
+                      } as Booking)));
+                      
+                      if (insights.bookings_last_30_days === 0) return t.noRecentBookingsInsight || "No bookings this month. Try promoting your services!";
+                      
+                      let action = "";
+                      if (insights.most_common_service?.toLowerCase().includes("bridal")) {
+                        action = t.promoteBridalAction || "Promote your bridal services to get more clients.";
+                      } else {
+                        action = t.promoteServicesAction || "Share your work on social media to attract new clients.";
+                      }
+
+                      return t.bookingsInsight.replace("{{count}}", insights.bookings_last_30_days.toString()).replace("{{action}}", action);
+                    })()}
+                  </p>
                 </div>
 
                 <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[48px] border border-premium-border shadow-sm h-[350px] lg:h-[450px] flex flex-col">
@@ -1117,11 +1155,10 @@ export default function App() {
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-premium-border px-4 py-3 flex justify-around items-center z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         {[
           { id: AppTab.DASHBOARD, icon: Calendar, label: t.bookings },
+          { id: AppTab.REVENUE, icon: IndianRupee, label: t.totalRevenue },
           { id: AppTab.CLIENTS, icon: Users, label: t.beautyLog },
           { id: AppTab.STRATEGY, icon: LayoutDashboard, label: t.strategy },
-          { id: AppTab.MESSAGES, icon: MessageSquareText, label: t.messages },
           { id: AppTab.PROFILE, icon: User, label: t.profile },
-          { id: AppTab.INSIGHTS, icon: TrendingUp, label: t.insights },
         ].map((item) => (
           <button
             key={item.id}
