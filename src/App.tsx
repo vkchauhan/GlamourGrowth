@@ -24,7 +24,8 @@ import {
   WifiOff,
   MessageCircle,
   Share2,
-  Users
+  Users,
+  User
 } from "lucide-react";
 import { 
   BarChart, 
@@ -62,6 +63,7 @@ import ExpenseForm from "./components/ExpenseForm";
 import DailyGrowthScreen from "./pages/DailyGrowthScreen";
 import RevenueDashboard from "./pages/RevenueDashboard";
 import Clients from "./pages/Clients";
+import Profile from "./pages/Profile";
 import { Booking, BookingInsights } from "./types";
 import { BookingInsightsService } from "./services/BookingInsightsService";
 
@@ -403,6 +405,17 @@ export default function App() {
             <span className="text-xs font-bold">{(totalIncome || 0).toLocaleString('en-IN')}</span>
           </button>
           <button 
+            onClick={() => setActiveTab(AppTab.PROFILE)}
+            className={cn(
+              "p-2 rounded-full border transition-colors",
+              activeTab === AppTab.PROFILE 
+                ? "bg-premium-ink text-white border-premium-ink" 
+                : "bg-white border-premium-border text-[#8E8E8E] hover:text-premium-ink"
+            )}
+          >
+            <User className="w-4 h-4" />
+          </button>
+          <button 
             onClick={handleLogout}
             className="p-2 rounded-full bg-white border border-premium-border text-[#8E8E8E] hover:text-red-500 transition-colors"
           >
@@ -449,6 +462,7 @@ export default function App() {
           {[
             { id: AppTab.DASHBOARD, label: t.bookings, icon: Calendar },
             { id: AppTab.CLIENTS, label: t.beautyLog, icon: Users },
+            { id: AppTab.PROFILE, label: t.myStudio, icon: User },
             { id: AppTab.STRATEGY, label: t.festivalStrategy, icon: LayoutDashboard },
             { id: AppTab.MESSAGES, label: t.messages, icon: MessageSquareText },
             { id: AppTab.GROWTH, label: t.dailyGrowthTask, icon: Sparkles },
@@ -1079,6 +1093,22 @@ export default function App() {
                 />
               </motion.div>
             )}
+
+            {activeTab === AppTab.PROFILE && (
+              <motion.div
+                key="profile"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="absolute inset-0 z-50 bg-slate-50 overflow-y-auto"
+              >
+                <Profile 
+                  onClose={() => setActiveTab(AppTab.DASHBOARD)}
+                  language={language}
+                  translations={t}
+                />
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </main>
@@ -1090,6 +1120,7 @@ export default function App() {
           { id: AppTab.CLIENTS, icon: Users, label: t.beautyLog },
           { id: AppTab.STRATEGY, icon: LayoutDashboard, label: t.strategy },
           { id: AppTab.MESSAGES, icon: MessageSquareText, label: t.messages },
+          { id: AppTab.PROFILE, icon: User, label: t.profile },
           { id: AppTab.INSIGHTS, icon: TrendingUp, label: t.insights },
         ].map((item) => (
           <button

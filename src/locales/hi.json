@@ -172,5 +172,21 @@
   "totalSpend": "Total Spend",
   "visits": "Visit Count",
   "sessionNotes": "Session Notes",
-  "clientProfile": "Client Profile"
+  "clientProfile": "Client Profile",
+  "profile": "My Studio",
+  "myStudio": "My Studio",
+  "myStudioSub": "Aapki professional digital identity",
+  "artistName": "Artist ka Naam",
+  "expertise": "Expertise",
+  "experience": "Experience (Saal)",
+  "areas": "Kaam karne ke areas",
+  "bio": "Mere baare mein",
+  "updateProfile": "Profile Update Karein",
+  "profileUpdated": "Profile update ho gayi!",
+  "digitalCard": "Digital Business Card",
+  "shareCard": "Business Card Share Karein",
+  "years": "Saal",
+  "specialist": "Specialist",
+  "operatingIn": "Operating in",
+  "connectWithMe": "Mujhse connect karein"
 }

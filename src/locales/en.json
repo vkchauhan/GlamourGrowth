@@ -172,5 +172,21 @@
   "totalSpend": "Total Spend",
   "visits": "Visits",
   "sessionNotes": "Session Notes",
-  "clientProfile": "Client Profile"
+  "clientProfile": "Client Profile",
+  "profile": "My Studio",
+  "myStudio": "My Studio",
+  "myStudioSub": "Your professional digital identity",
+  "artistName": "Artist Name",
+  "expertise": "Expertise",
+  "experience": "Years of Experience",
+  "areas": "Areas of Operation",
+  "bio": "About Me",
+  "updateProfile": "Update Profile",
+  "profileUpdated": "Profile updated successfully!",
+  "digitalCard": "Digital Business Card",
+  "shareCard": "Share Business Card",
+  "years": "Years",
+  "specialist": "Specialist",
+  "operatingIn": "Operating in",
+  "connectWithMe": "Connect with me"
 }

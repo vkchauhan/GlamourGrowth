@@ -14,6 +14,7 @@ export enum AppTab {
   TRY_ON = "try_on",
   REVENUE = "revenue",
   CLIENTS = "clients",
+  PROFILE = "profile",
 }
 
 export enum Language {
@@ -72,6 +73,18 @@ export interface IncomeEntry {
   services?: BookingService[];
   photos?: string[];
   sessionNotes?: string;
+}
+
+export interface UserProfile {
+  uid: string;
+  name: string;
+  expertise: string[]; // e.g., ["Bridal", "Party"]
+  experience: number; // years
+  areas: string[]; // e.g., ["South Delhi", "Gurgaon"]
+  bio?: string;
+  profileImage?: string;
+  phone?: string;
+  instagram?: string;
 }
 
 export const OCCASIONS = [
