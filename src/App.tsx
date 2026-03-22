@@ -425,6 +425,7 @@ export default function App() {
         <nav className="flex-1 px-6 space-y-2">
           {[
             { id: AppTab.DASHBOARD, label: t.bookings, icon: Calendar },
+            { id: AppTab.CLIENTS, label: t.beautyLog, icon: Users },
             { id: AppTab.STRATEGY, label: t.festivalStrategy, icon: LayoutDashboard },
             { id: AppTab.MESSAGES, label: t.messages, icon: MessageSquareText },
             { id: AppTab.GROWTH, label: t.dailyGrowthTask, icon: Sparkles },
@@ -652,6 +653,13 @@ export default function App() {
                 <div className="bg-white rounded-[32px] lg:rounded-[48px] border border-premium-border shadow-sm overflow-hidden">
                   <div className="p-6 lg:p-10 border-b border-premium-border flex justify-between items-center">
                     <h3 className="text-lg lg:text-xl font-serif font-bold italic">{t.recentBookings}</h3>
+                    <button 
+                      onClick={() => setActiveTab(AppTab.CLIENTS)}
+                      className="text-xs font-bold uppercase tracking-widest text-premium-gold hover:text-premium-ink transition-colors flex items-center gap-2"
+                    >
+                      <Users className="w-4 h-4" />
+                      {t.beautyLog}
+                    </button>
                   </div>
                   <div className="divide-y divide-premium-border">
                     {incomeEntries.length === 0 ? (
@@ -1010,28 +1018,26 @@ export default function App() {
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-premium-border px-4 py-3 flex justify-around items-center z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         {[
           { id: AppTab.DASHBOARD, icon: Calendar, label: t.bookings },
-          { id: AppTab.CLIENTS, icon: Users, label: t.clients },
+          { id: AppTab.CLIENTS, icon: Users, label: t.beautyLog },
           { id: AppTab.STRATEGY, icon: LayoutDashboard, label: t.strategy },
           { id: AppTab.MESSAGES, icon: MessageSquareText, label: t.messages },
           { id: AppTab.INSIGHTS, icon: TrendingUp, label: t.insights },
-          { id: AppTab.TRY_ON, icon: Sparkles, label: t.tryOn, comingSoon: true },
         ].map((item) => (
           <button
             key={item.id}
-            onClick={() => !item.comingSoon && setActiveTab(item.id as AppTab)}
-            disabled={item.comingSoon}
+            onClick={() => setActiveTab(item.id as AppTab)}
             className={cn(
               "flex flex-col items-center gap-1 transition-all duration-300 relative",
-              activeTab === item.id ? "text-premium-ink scale-110" : "text-[#8E8E8E]",
-              item.comingSoon && "opacity-50 cursor-not-allowed"
+              activeTab === item.id ? "text-premium-ink" : "text-[#8E8E8E]"
             )}
           >
             <item.icon className={cn("w-5 h-5", activeTab === item.id ? "text-premium-gold" : "")} />
-            <span className="text-[9px] font-bold uppercase tracking-widest">{item.label}</span>
-            {item.comingSoon && (
-              <span className="absolute -top-1 -right-2 text-[6px] font-black uppercase bg-premium-gold text-white px-1 rounded-sm leading-tight">
-                SOON
-              </span>
+            <span className={cn("text-[9px] font-bold uppercase tracking-widest", activeTab === item.id ? "text-premium-ink" : "text-[#8E8E8E]")}>{item.label}</span>
+            {activeTab === item.id && (
+              <motion.div 
+                layoutId="activeTab"
+                className="absolute -bottom-1 w-1 h-1 rounded-full bg-premium-gold"
+              />
             )}
           </button>
         ))}

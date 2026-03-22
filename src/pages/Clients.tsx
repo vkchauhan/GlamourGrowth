@@ -66,7 +66,7 @@ const Clients: React.FC<ClientsProps> = ({ onClose, language, translations: t })
           </button>
           <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <Users className="w-6 h-6 text-premium-gold" />
-            {t.clients || "My Clients"}
+            {t.beautyLog || "Beauty Log"}
           </h1>
         </div>
 
