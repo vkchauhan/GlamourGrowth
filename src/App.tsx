@@ -92,6 +92,8 @@ export default function App() {
   const [strategy, setStrategy] = useState<any>(null);
   const [loadingStrategy, setLoadingStrategy] = useState(false);
   const [selectedOccasion, setSelectedOccasion] = useState(OCCASIONS[0]);
+  const [occasionSearchQuery, setOccasionSearchQuery] = useState("");
+  const [showOccasionSuggestions, setShowOccasionSuggestions] = useState(false);
 
   const occasionTranslations: Record<string, string> = {
     "Karwa Chauth": t.karwaChauth,
@@ -111,6 +113,27 @@ export default function App() {
     "Engagement": t.engagement,
     "Editorial": t.editorial,
   };
+
+  const filteredOccasions = useMemo(() => {
+    if (!occasionSearchQuery) return OCCASIONS;
+    return OCCASIONS.filter(o => {
+      const translated = (occasionTranslations[o] || o).toLowerCase();
+      const original = o.toLowerCase();
+      const query = occasionSearchQuery.toLowerCase();
+      return translated.includes(query) || original.includes(query);
+    });
+  }, [occasionSearchQuery, occasionTranslations]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.occasion-dropdown-container')) {
+        setShowOccasionSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -726,15 +749,61 @@ export default function App() {
 
                 <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm space-y-6 lg:space-y-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-                    <div className="space-y-2 lg:space-y-3">
+                    <div className="space-y-2 lg:space-y-3 relative occasion-dropdown-container">
                       <label className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold">{t.selectFestival}</label>
-                      <select 
-                        value={selectedOccasion}
-                        onChange={(e) => setSelectedOccasion(e.target.value)}
-                        className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none focus:ring-2 focus:ring-premium-gold/20 font-medium text-sm lg:text-base"
-                      >
-                        {OCCASIONS.map(o => <option key={o} value={o}>{occasionTranslations[o] || o}</option>)}
-                      </select>
+                      <div className="relative">
+                        <input 
+                          type="text"
+                          placeholder={t.selectFestival}
+                          value={showOccasionSuggestions ? occasionSearchQuery : (occasionTranslations[selectedOccasion] || selectedOccasion)}
+                          onChange={(e) => {
+                            setOccasionSearchQuery(e.target.value);
+                            setShowOccasionSuggestions(true);
+                          }}
+                          onFocus={() => {
+                            setOccasionSearchQuery("");
+                            setShowOccasionSuggestions(true);
+                          }}
+                          className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none focus:ring-2 focus:ring-premium-gold/20 font-medium text-sm lg:text-base"
+                        />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <ChevronRight className={cn("w-5 h-5 text-[#8E8E8E] transition-transform", showOccasionSuggestions ? "rotate-90" : "rotate-0")} />
+                        </div>
+                      </div>
+
+                      <AnimatePresence>
+                        {showOccasionSuggestions && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute z-50 w-full mt-2 bg-white border border-premium-border rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto"
+                          >
+                            {filteredOccasions.length > 0 ? (
+                              filteredOccasions.map((o) => (
+                                <div
+                                  key={o}
+                                  onClick={() => {
+                                    setSelectedOccasion(o);
+                                    setOccasionSearchQuery("");
+                                    setShowOccasionSuggestions(false);
+                                  }}
+                                  className={cn(
+                                    "p-4 hover:bg-premium-bg cursor-pointer transition-colors border-b border-premium-border last:border-0 text-sm font-medium",
+                                    selectedOccasion === o ? "bg-premium-bg text-premium-gold" : "text-premium-ink"
+                                  )}
+                                >
+                                  {occasionTranslations[o] || o}
+                                </div>
+                              ))
+                            ) : (
+                              <div className="p-4 text-center text-xs text-[#8E8E8E] italic">
+                                No matching occasions found.
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                     <div className="flex items-end">
                       <button 
