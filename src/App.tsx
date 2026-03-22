@@ -13,6 +13,7 @@ import {
   IndianRupee, 
   Calendar, 
   ChevronRight,
+  ArrowLeft,
   Loader2,
   Copy,
   CheckCircle2,
@@ -50,7 +51,7 @@ import {
   deleteExpense
 } from "./services/bookingService";
 import { auth, db } from "./services/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { pwaService } from "./services/pwaService";
 import { nudgeService } from "./services/nudgeService";
@@ -64,8 +65,9 @@ import DailyGrowthScreen from "./pages/DailyGrowthScreen";
 import RevenueDashboard from "./pages/RevenueDashboard";
 import Clients from "./pages/Clients";
 import Profile from "./pages/Profile";
-import { Booking, BookingInsights } from "./types";
+import { Booking, BookingInsights, Client } from "./types";
 import { BookingInsightsService } from "./services/BookingInsightsService";
+import { getClients } from "./services/bookingService";
 
 const translations = {
   [Language.EN]: en,
@@ -143,6 +145,8 @@ export default function App() {
 
   const [insights, setInsights] = useState<any>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
+  const [artistProfile, setArtistProfile] = useState<any>(null);
+  const [clients, setClients] = useState<any[]>([]);
   const [dismissedNudges, setDismissedNudges] = useState<string[]>(() => {
     const saved = localStorage.getItem("glamour_growth_dismissed_nudges");
     return saved ? JSON.parse(saved) : [];
@@ -314,10 +318,33 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchContext = async () => {
+      try {
+        // Fetch Artist Profile
+        const profileRef = doc(db, 'profiles', user.uid);
+        const profileSnap = await getDoc(profileRef);
+        if (profileSnap.exists()) {
+          setArtistProfile(profileSnap.data());
+        }
+
+        // Fetch Clients
+        const clientsData = await getClients();
+        setClients(clientsData);
+      } catch (err) {
+        console.error("Error fetching context for AI:", err);
+      }
+    };
+
+    fetchContext();
+  }, [user]);
+
   const generateStrategy = async () => {
     setLoadingStrategy(true);
     try {
-      const res = await geminiService.generateOccasionStrategy(selectedOccasion, totalIncome, language);
+      const res = await geminiService.generateOccasionStrategy(selectedOccasion, totalIncome, language, artistProfile);
       setStrategy(res);
     } catch (e) {
       console.error(e);
@@ -330,7 +357,12 @@ export default function App() {
     if (!clientContext) return;
     setLoadingMessages(true);
     try {
-      const res = await geminiService.generateFollowUpMessages(clientContext, language);
+      // Try to find a client in the context
+      const mentionedClient = clients.find(c => 
+        clientContext.toLowerCase().includes(c.name.toLowerCase())
+      );
+      
+      const res = await geminiService.generateFollowUpMessages(clientContext, language, artistProfile, mentionedClient);
       setMessages(res.messages || []);
     } catch (e) {
       console.error(e);
@@ -342,7 +374,7 @@ export default function App() {
   const generateInsights = async () => {
     setLoadingInsights(true);
     try {
-      const res = await geminiService.generateBusinessInsights(incomeEntries, language);
+      const res = await geminiService.generateBusinessInsights(incomeEntries, language, artistProfile);
       setInsights(res);
     } catch (e) {
       console.error(e);
@@ -570,7 +602,7 @@ export default function App() {
 
                 {/* Smart Nudges Section */}
                 {(() => {
-                  const allNudges = nudgeService.generateNudges(incomeEntries);
+                  const allNudges = nudgeService.generateNudges(incomeEntries, artistProfile);
                   const nudges = allNudges.filter(n => !dismissedNudges.includes(n.id));
                   if (nudges.length === 0) return null;
                   
@@ -715,9 +747,17 @@ export default function App() {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-8 lg:space-y-12"
               >
-                <header>
-                  <h2 className="text-3xl lg:text-5xl font-serif font-medium tracking-tight">{t.festivalStrategy}</h2>
-                  <p className="text-[#666] mt-2 lg:mt-3 text-base lg:text-lg font-light italic">{t.festivalStrategySub}</p>
+                <header className="flex items-center gap-4 mb-8 lg:mb-12">
+                  <button 
+                    onClick={() => setActiveTab(AppTab.DASHBOARD)}
+                    className="p-2 hover:bg-premium-bg rounded-full transition-colors active:scale-95"
+                  >
+                    <ArrowLeft className="w-6 h-6 text-premium-ink" />
+                  </button>
+                  <div>
+                    <h2 className="text-3xl lg:text-5xl font-serif font-medium tracking-tight">{t.festivalStrategy}</h2>
+                    <p className="text-[#666] mt-2 lg:mt-3 text-base lg:text-lg font-light italic">{t.festivalStrategySub}</p>
+                  </div>
                 </header>
 
                 <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm space-y-6 lg:space-y-8">
@@ -950,10 +990,18 @@ export default function App() {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-8 lg:space-y-12"
               >
-                <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4">
-                  <div>
-                    <h2 className="text-3xl lg:text-5xl font-serif font-medium tracking-tight">{t.growthInsights}</h2>
-                    <p className="text-[#666] mt-2 lg:mt-3 text-base lg:text-lg font-light italic">{t.growthInsightsSub}</p>
+                <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => setActiveTab(AppTab.DASHBOARD)}
+                      className="p-2 hover:bg-premium-bg rounded-full transition-colors active:scale-95"
+                    >
+                      <ArrowLeft className="w-6 h-6 text-premium-ink" />
+                    </button>
+                    <div>
+                      <h2 className="text-3xl lg:text-5xl font-serif font-medium tracking-tight">{t.growthInsights}</h2>
+                      <p className="text-[#666] mt-2 lg:mt-3 text-base lg:text-lg font-light italic">{t.growthInsightsSub}</p>
+                    </div>
                   </div>
                   <button 
                     onClick={generateInsights}

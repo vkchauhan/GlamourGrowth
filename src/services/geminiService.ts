@@ -91,10 +91,12 @@ export class GeminiService {
     }
   }
 
-  async generateOccasionStrategy(occasion: string, currentIncome: number, language: Language = Language.HINGLISH) {
+  async generateOccasionStrategy(occasion: string, currentIncome: number, language: Language = Language.HINGLISH, artistProfile?: any) {
+    const artistContext = artistProfile ? `Artist Profile: Name: ${artistProfile.name}, Expertise: ${artistProfile.expertise?.join(', ')}, Experience: ${artistProfile.experience} years, Bio: ${artistProfile.bio}.` : "";
+    
     const response = await this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Generate a revenue strategy for ${occasion}. My current monthly income is ₹${currentIncome}.`,
+      contents: `${artistContext} Generate a personalized revenue strategy for ${occasion}. My current monthly income is ₹${currentIncome}. Focus on how I can leverage my specific expertise and experience.`,
       config: {
         systemInstruction: getSystemInstruction(language),
         responseMimeType: "application/json",
@@ -105,10 +107,13 @@ export class GeminiService {
     return JSON.parse(response.text || "{}");
   }
 
-  async generateFollowUpMessages(clientContext: string, language: Language = Language.HINGLISH) {
+  async generateFollowUpMessages(clientContext: string, language: Language = Language.HINGLISH, artistProfile?: any, clientData?: any) {
+    const artistContext = artistProfile ? `Artist Profile: Name: ${artistProfile.name}, Expertise: ${artistProfile.expertise?.join(', ')}.` : "";
+    const clientInfo = clientData ? `Client Info: Name: ${clientData.name}, Preferences: ${clientData.preferences}, Skin Type: ${clientData.skinType}, Notes: ${clientData.notes}.` : "";
+
     const response = await this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Generate 3 smart follow-up messages for this client context: ${clientContext}. Focus on conversion and Indian pricing psychology.`,
+      contents: `${artistContext} ${clientInfo} Generate 3 highly personalized and professional follow-up messages for this client context: ${clientContext}. Use the artist's name and expertise to sound authentic. If client info is available, reference their preferences or skin type to show care. Focus on conversion and Indian pricing psychology.`,
       config: {
         systemInstruction: getSystemInstruction(language),
         responseMimeType: "application/json",
@@ -119,10 +124,12 @@ export class GeminiService {
     return JSON.parse(response.text || "{}");
   }
 
-  async generateBusinessInsights(incomeData: any[], language: Language = Language.HINGLISH) {
+  async generateBusinessInsights(incomeData: any[], language: Language = Language.HINGLISH, artistProfile?: any) {
+    const artistContext = artistProfile ? `Artist Profile: Name: ${artistProfile.name}, Expertise: ${artistProfile.expertise?.join(', ')}, Experience: ${artistProfile.experience} years.` : "";
+
     const response = await this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Analyze this income data and provide growth insights: ${JSON.stringify(incomeData)}. Focus on Indian market trends and revenue maximization.`,
+      contents: `${artistContext} Analyze this income data and provide personalized growth insights for this specific artist: ${JSON.stringify(incomeData)}. Focus on Indian market trends, revenue maximization, and how to better utilize the artist's specific skills.`,
       config: {
         systemInstruction: getSystemInstruction(language),
         responseMimeType: "application/json",
@@ -133,10 +140,12 @@ export class GeminiService {
     return JSON.parse(response.text || "{}");
   }
 
-  async generateInstagramPost(contentType: string, topic: string, language: Language = Language.HINGLISH) {
+  async generateInstagramPost(contentType: string, topic: string, language: Language = Language.HINGLISH, artistProfile?: any) {
+    const artistContext = artistProfile ? `Artist Profile: Name: ${artistProfile.name}, Expertise: ${artistProfile.expertise?.join(', ')}, Bio: ${artistProfile.bio}.` : "";
+
     const response = await this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Generate Instagram content for a ${contentType} about ${topic}. Focus on Indian makeup artist context and client attraction.`,
+      contents: `${artistContext} Generate viral Instagram content for a ${contentType} about ${topic}. Focus on Indian makeup artist context and client attraction. Use the artist's specific expertise and brand voice.`,
       config: {
         systemInstruction: getSystemInstruction(language),
         responseMimeType: "application/json",
