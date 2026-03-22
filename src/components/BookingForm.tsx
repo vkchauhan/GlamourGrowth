@@ -439,50 +439,6 @@ export default function BookingForm({ onClose, onSuccess, language, translations
               />
             </div>
 
-            <div className="space-y-2 lg:space-y-3">
-              <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
-                <FileText className="w-3 h-3 text-premium-gold" />
-                {t.sessionNotes || "Session Notes"}
-              </label>
-              <textarea 
-                placeholder="Add details about skin type, products used, or client preferences for this session..."
-                value={formData.sessionNotes}
-                onChange={(e) => setFormData({ ...formData, sessionNotes: e.target.value })}
-                className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base min-h-[100px] resize-none"
-              />
-            </div>
-
-            <div className="space-y-2 lg:space-y-3">
-              <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
-                <Camera className="w-3 h-3 text-premium-gold" />
-                {t.photos || "Session Photos"}
-              </label>
-              <div className="grid grid-cols-4 gap-3">
-                {formData.photos.map((photo, index) => (
-                  <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-premium-border">
-                    <img src={photo} alt="Session" className="w-full h-full object-cover" />
-                    <button 
-                      onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
-                      className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-                <button 
-                  onClick={() => {
-                    // Simulate photo upload by adding a random picsum image
-                    const newPhoto = `https://picsum.photos/seed/${Math.random()}/800/800`;
-                    setFormData({ ...formData, photos: [...formData.photos, newPhoto] });
-                  }}
-                  className="aspect-square rounded-xl border-2 border-dashed border-premium-border flex flex-col items-center justify-center gap-1 hover:border-premium-gold hover:bg-premium-bg transition-all group"
-                >
-                  <Plus className="w-5 h-5 text-[#8E8E8E] group-hover:text-premium-gold" />
-                  <span className="text-[10px] text-[#8E8E8E] font-bold group-hover:text-premium-gold">ADD</span>
-                </button>
-              </div>
-            </div>
-
             {/* Service Multi-select */}
             <div className="space-y-2 lg:space-y-3 relative" ref={dropdownRef}>
               <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold">{t.selectServices || "Select Services"}</label>
@@ -637,6 +593,81 @@ export default function BookingForm({ onClose, onSuccess, language, translations
                 </div>
               </div>
             )}
+
+            <div className="space-y-2 lg:space-y-3">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
+                <Camera className="w-3 h-3 text-premium-gold" />
+                {t.photos || "Session Photos"} <span className="text-[8px] opacity-60">(Optional)</span>
+              </label>
+              <div className="grid grid-cols-4 gap-3">
+                {formData.photos.map((photo, index) => (
+                  <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-premium-border">
+                    <img src={photo} alt="Session" className="w-full h-full object-cover" />
+                    <button 
+                      onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
+                      className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                
+                <div className="flex flex-col gap-2">
+                  <label className="flex-1 aspect-square rounded-xl border-2 border-dashed border-premium-border flex flex-col items-center justify-center gap-1 hover:border-premium-gold hover:bg-premium-bg transition-all group cursor-pointer">
+                    <Camera className="w-5 h-5 text-[#8E8E8E] group-hover:text-premium-gold" />
+                    <span className="text-[8px] text-[#8E8E8E] font-bold group-hover:text-premium-gold uppercase">Camera</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment" 
+                      className="hidden" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setFormData({ ...formData, photos: [...formData.photos, reader.result as string] });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                  <label className="flex-1 aspect-square rounded-xl border-2 border-dashed border-premium-border flex flex-col items-center justify-center gap-1 hover:border-premium-gold hover:bg-premium-bg transition-all group cursor-pointer">
+                    <Plus className="w-5 h-5 text-[#8E8E8E] group-hover:text-premium-gold" />
+                    <span className="text-[8px] text-[#8E8E8E] font-bold group-hover:text-premium-gold uppercase">Gallery</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setFormData({ ...formData, photos: [...formData.photos, reader.result as string] });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2 lg:space-y-3">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
+                <FileText className="w-3 h-3 text-premium-gold" />
+                {t.sessionNotes || "Session Notes"} <span className="text-[8px] opacity-60">(Optional)</span>
+              </label>
+              <textarea 
+                placeholder="Add details about skin type, products used, or client preferences for this session..."
+                value={formData.sessionNotes}
+                onChange={(e) => setFormData({ ...formData, sessionNotes: e.target.value })}
+                className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base min-h-[100px] resize-none"
+              />
+            </div>
           </div>
         </div>
 
