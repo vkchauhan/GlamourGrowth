@@ -162,5 +162,15 @@
   "bookingsInsight": "You had {{count}} bookings this month. {{action}}",
   "noRecentBookingsInsight": "No bookings this month. Try promoting your services!",
   "promoteBridalAction": "Promote your bridal services to get more clients.",
-  "promoteServicesAction": "Share your work on social media to attract new clients."
+  "promoteServicesAction": "Share your work on social media to attract new clients.",
+  "clients": "Clients",
+  "searchClients": "Search by name or phone...",
+  "beautyLog": "Beauty Log",
+  "skinType": "Skin Type",
+  "preferences": "Makeup Preferences",
+  "personalNotes": "Personal Notes",
+  "totalSpend": "Total Spend",
+  "visits": "Visits",
+  "sessionNotes": "Session Notes",
+  "clientProfile": "Client Profile"
 }

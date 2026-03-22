@@ -1,4 +1,4 @@
-import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, deleteDoc, doc, setDoc, getDoc, where, limit, startAt, endAt, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, deleteDoc, doc, setDoc, getDoc, where, limit, startAt, endAt, onSnapshot, increment, updateDoc } from "firebase/firestore";
 import { db, auth } from "./firebase";
 
 import { Booking, Service, BookingService, Client } from "../types";
@@ -63,6 +63,8 @@ export async function saveBooking(data: any) {
       services: data.services || [],
       total_amount: data.total_amount || data.price || 0,
       date: data.date || new Date().toISOString().split('T')[0],
+      photos: data.photos || [],
+      sessionNotes: data.sessionNotes || "",
       createdAt: serverTimestamp()
     };
     
@@ -71,13 +73,15 @@ export async function saveBooking(data: any) {
     // Also update or create the client in the clients collection
     if (bookingData.client_name && bookingData.client_name !== "Unknown Client") {
       if (bookingData.client_id) {
-        // If we have a client_id, we might want to update the client's last booking date or phone if it changed
+        // If we have a client_id, update the client's stats
         const clientRef = doc(db, "clients", bookingData.client_id);
-        await setDoc(clientRef, {
+        await updateDoc(clientRef, {
           name: bookingData.client_name,
           phone: bookingData.client_phone,
-          lastBookingAt: serverTimestamp()
-        }, { merge: true });
+          lastBookingAt: serverTimestamp(),
+          totalSpend: increment(bookingData.total_amount),
+          visitCount: increment(1)
+        });
       } else {
         // Check if client exists by name and phone to avoid duplicates
         const clientQuery = query(
@@ -93,14 +97,21 @@ export async function saveBooking(data: any) {
             name: bookingData.client_name,
             phone: bookingData.client_phone,
             createdAt: serverTimestamp(),
-            lastBookingAt: serverTimestamp()
+            lastBookingAt: serverTimestamp(),
+            totalSpend: bookingData.total_amount,
+            visitCount: 1,
+            skinType: "",
+            preferences: "",
+            notes: ""
           });
         } else {
-          // Update existing client's last booking date
+          // Update existing client's stats
           const clientDoc = clientSnap.docs[0];
-          await setDoc(clientDoc.ref, {
-            lastBookingAt: serverTimestamp()
-          }, { merge: true });
+          await updateDoc(clientDoc.ref, {
+            lastBookingAt: serverTimestamp(),
+            totalSpend: increment(bookingData.total_amount),
+            visitCount: increment(1)
+          });
         }
       }
     }
@@ -135,16 +146,74 @@ export async function searchClients(queryText: string): Promise<Client[]> {
   }
 }
 
-export async function getBookings() {
+export async function getClients(): Promise<Client[]> {
+  try {
+    const q = query(collection(db, "clients"), orderBy("name"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Client));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, "clients");
+    return [];
+  }
+}
+
+export async function getClientById(clientId: string): Promise<Client | null> {
+  try {
+    const docRef = doc(db, "clients", clientId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as Client;
+    }
+    return null;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `clients/${clientId}`);
+    return null;
+  }
+}
+
+export async function updateClientProfile(clientId: string, data: Partial<Client>) {
+  try {
+    const clientRef = doc(db, "clients", clientId);
+    await updateDoc(clientRef, data);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `clients/${clientId}`);
+  }
+}
+
+export async function getClientHistory(clientId: string): Promise<Booking[]> {
+  try {
+    // We need to find bookings where client_id matches OR name/phone matches if client_id was null
+    // For simplicity, let's assume client_id is always set if we're in the profile
+    const q = query(
+      collection(db, "bookings"),
+      where("client_id", "==", clientId),
+      orderBy("date", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      booking_id: doc.id,
+      ...doc.data()
+    } as Booking));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, "bookings");
+    return [];
+  }
+}
+
+export async function getBookings(): Promise<Booking[]> {
   try {
     const q = query(collection(db, "bookings"), orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({
       booking_id: doc.id,
       ...doc.data()
-    }));
+    } as Booking));
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, "bookings");
+    return [];
   }
 }
 

@@ -18,7 +18,7 @@ import { geminiService } from "../services/geminiService";
 
 const translations = {
   [Language.EN]: en,
-  [Language.HI]: hi,
+  [Language.HINGLISH]: hi,
 };
 
 interface VirtualTryOnProps {

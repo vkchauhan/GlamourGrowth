@@ -19,7 +19,7 @@ declare global {
 
 const translations = {
   [Language.EN]: en,
-  [Language.HI]: hi,
+  [Language.HINGLISH]: hi,
 };
 
 interface LoginProps {
@@ -217,8 +217,8 @@ export default function Login({ language, setLanguage, onLoginSuccess }: LoginPr
                 English
               </button>
               <button 
-                onClick={() => setLanguage(Language.HI)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${language === Language.HI ? "bg-premium-ink text-white shadow-lg" : "text-[#8E8E8E]"}`}
+                onClick={() => setLanguage(Language.HINGLISH)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${language === Language.HINGLISH ? "bg-premium-ink text-white shadow-lg" : "text-[#8E8E8E]"}`}
               >
                 Hinglish
               </button>

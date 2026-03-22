@@ -13,11 +13,12 @@ export enum AppTab {
   GROWTH = "growth",
   TRY_ON = "try_on",
   REVENUE = "revenue",
+  CLIENTS = "clients",
 }
 
 export enum Language {
   EN = "en",
-  HI = "hi",
+  HINGLISH = "hi",
 }
 
 export interface Service {
@@ -41,6 +42,8 @@ export interface Booking {
   date: string;
   services: BookingService[];
   total_amount: number;
+  photos?: string[];
+  sessionNotes?: string;
   created_at?: string;
 }
 
@@ -49,6 +52,12 @@ export interface Client {
   name: string;
   phone?: string;
   email?: string;
+  skinType?: string;
+  preferences?: string;
+  notes?: string;
+  totalSpend?: number;
+  visitCount?: number;
+  lastBookingAt?: any;
   createdAt?: any;
 }
 
@@ -61,6 +70,8 @@ export interface IncomeEntry {
   clientName: string;
   clientPhone?: string;
   services?: BookingService[];
+  photos?: string[];
+  sessionNotes?: string;
 }
 
 export const OCCASIONS = [

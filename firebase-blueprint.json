@@ -23,6 +23,11 @@
           }
         },
         "status": { "type": "string", "enum": ["confirmed", "pending", "cancelled"] },
+        "photos": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "sessionNotes": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "date", "price"]
@@ -36,6 +41,12 @@
         "name": { "type": "string" },
         "phone": { "type": "string" },
         "email": { "type": "string", "format": "email" },
+        "skinType": { "type": "string" },
+        "preferences": { "type": "string" },
+        "notes": { "type": "string" },
+        "totalSpend": { "type": "number" },
+        "visitCount": { "type": "number" },
+        "lastBookingAt": { "type": "string", "format": "date-time" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name"]

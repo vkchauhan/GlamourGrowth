@@ -29,7 +29,7 @@ function cn(...inputs: ClassValue[]) {
 
 const translations = {
   [Language.EN]: en,
-  [Language.HI]: hi,
+  [Language.HINGLISH]: hi,
 };
 
 interface InstagramCreatorProps {

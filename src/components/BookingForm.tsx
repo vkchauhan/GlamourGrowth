@@ -10,7 +10,9 @@ import {
   Loader2,
   Calendar,
   User,
-  Phone
+  Phone,
+  Camera,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -73,7 +75,9 @@ export default function BookingForm({ onClose, onSuccess, language, translations
     client_name: '',
     client_phone: '',
     date: new Date().toISOString().split('T')[0],
-    selectedServices: [] as BookingService[]
+    selectedServices: [] as BookingService[],
+    sessionNotes: '',
+    photos: [] as string[]
   });
 
   const [clientSuggestions, setClientSuggestions] = useState<Client[]>([]);
@@ -275,7 +279,9 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         client_phone: formData.client_phone,
         date: formData.date,
         services: formData.selectedServices,
-        total_amount: totalAmount
+        total_amount: totalAmount,
+        sessionNotes: formData.sessionNotes,
+        photos: formData.photos
       });
 
       const booking: Booking = {
@@ -285,7 +291,9 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         client_phone: formData.client_phone,
         date: formData.date,
         services: formData.selectedServices,
-        total_amount: totalAmount
+        total_amount: totalAmount,
+        sessionNotes: formData.sessionNotes,
+        photos: formData.photos
       };
       
       // Save last used prices to localStorage and state
@@ -429,6 +437,50 @@ export default function BookingForm({ onClose, onSuccess, language, translations
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
               />
+            </div>
+
+            <div className="space-y-2 lg:space-y-3">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
+                <FileText className="w-3 h-3 text-premium-gold" />
+                {t.sessionNotes || "Session Notes"}
+              </label>
+              <textarea 
+                placeholder="Add details about skin type, products used, or client preferences for this session..."
+                value={formData.sessionNotes}
+                onChange={(e) => setFormData({ ...formData, sessionNotes: e.target.value })}
+                className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base min-h-[100px] resize-none"
+              />
+            </div>
+
+            <div className="space-y-2 lg:space-y-3">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
+                <Camera className="w-3 h-3 text-premium-gold" />
+                {t.photos || "Session Photos"}
+              </label>
+              <div className="grid grid-cols-4 gap-3">
+                {formData.photos.map((photo, index) => (
+                  <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-premium-border">
+                    <img src={photo} alt="Session" className="w-full h-full object-cover" />
+                    <button 
+                      onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
+                      className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                <button 
+                  onClick={() => {
+                    // Simulate photo upload by adding a random picsum image
+                    const newPhoto = `https://picsum.photos/seed/${Math.random()}/800/800`;
+                    setFormData({ ...formData, photos: [...formData.photos, newPhoto] });
+                  }}
+                  className="aspect-square rounded-xl border-2 border-dashed border-premium-border flex flex-col items-center justify-center gap-1 hover:border-premium-gold hover:bg-premium-bg transition-all group"
+                >
+                  <Plus className="w-5 h-5 text-[#8E8E8E] group-hover:text-premium-gold" />
+                  <span className="text-[10px] text-[#8E8E8E] font-bold group-hover:text-premium-gold">ADD</span>
+                </button>
+              </div>
             </div>
 
             {/* Service Multi-select */}

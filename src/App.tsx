@@ -23,7 +23,8 @@ import {
   Bell,
   WifiOff,
   MessageCircle,
-  Share2
+  Share2,
+  Users
 } from "lucide-react";
 import { 
   BarChart, 
@@ -60,12 +61,13 @@ import BookingForm from "./components/BookingForm";
 import ExpenseForm from "./components/ExpenseForm";
 import DailyGrowthScreen from "./pages/DailyGrowthScreen";
 import RevenueDashboard from "./pages/RevenueDashboard";
+import Clients from "./pages/Clients";
 import { Booking, BookingInsights } from "./types";
 import { BookingInsightsService } from "./services/BookingInsightsService";
 
 const translations = {
   [Language.EN]: en,
-  [Language.HI]: hi,
+  [Language.HINGLISH]: hi,
 };
 
 function cn(...inputs: ClassValue[]) {
@@ -78,7 +80,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.DASHBOARD);
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem("glamour_growth_lang");
-    return (saved as Language) || Language.HI;
+    return (saved as Language) || Language.HINGLISH;
   });
   const t = translations[language];
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([]);
@@ -157,7 +159,7 @@ export default function App() {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = language === Language.HI ? 'hi-IN' : 'en-IN';
+    recognition.lang = language === Language.HINGLISH ? 'hi-IN' : 'en-IN';
     recognition.continuous = false;
     recognition.interimResults = false;
 
@@ -208,7 +210,9 @@ export default function App() {
         category: b.services?.[0]?.name || "General",
         clientName: b.client_name || b.name || "Unknown Client",
         clientPhone: b.client_phone || b.phone,
-        services: b.services || []
+        services: b.services || [],
+        photos: b.photos || [],
+        sessionNotes: b.sessionNotes || ""
       }));
       setIncomeEntries(mapped);
     });
@@ -362,8 +366,8 @@ export default function App() {
               EN
             </button>
             <button 
-              onClick={() => setLanguage(Language.HI)}
-              className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold transition-all", language === Language.HI ? "bg-premium-ink text-white" : "text-[#8E8E8E]")}
+              onClick={() => setLanguage(Language.HINGLISH)}
+              className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold transition-all", language === Language.HINGLISH ? "bg-premium-ink text-white" : "text-[#8E8E8E]")}
             >
               HG
             </button>
@@ -409,8 +413,8 @@ export default function App() {
                 English
               </button>
               <button 
-                onClick={() => setLanguage(Language.HI)}
-                className={cn("px-4 py-1.5 rounded-full text-xs font-bold transition-all", language === Language.HI ? "bg-premium-ink text-white shadow-lg" : "text-[#8E8E8E]")}
+                onClick={() => setLanguage(Language.HINGLISH)}
+                className={cn("px-4 py-1.5 rounded-full text-xs font-bold transition-all", language === Language.HINGLISH ? "bg-premium-ink text-white shadow-lg" : "text-[#8E8E8E]")}
               >
                 Hinglish
               </button>
@@ -551,10 +555,10 @@ export default function App() {
                             </div>
                             <div className="flex-1">
                               <h3 className="text-lg font-serif font-medium text-premium-ink">
-                                {language === Language.HI ? nudge.title_hi : nudge.title_en}
+                                {language === Language.HINGLISH ? nudge.title_hi : nudge.title_en}
                               </h3>
                               <p className="text-sm text-[#666] mt-1 font-light italic">
-                                {language === Language.HI ? nudge.message_hi : nudge.message_en}
+                                {language === Language.HINGLISH ? nudge.message_hi : nudge.message_en}
                               </p>
                               
                               <div className="flex items-center gap-3 mt-4">
@@ -860,7 +864,7 @@ export default function App() {
                             className="flex items-center gap-2 px-4 py-2 bg-[#25D366] text-white rounded-full text-[10px] font-bold hover:bg-[#128C7E] transition-all shadow-lg shadow-[#25D366]/20"
                           >
                             <MessageCircle className="w-3 h-3 fill-current" />
-                            {language === Language.HI ? "WhatsApp पर भेजें" : "Share on WhatsApp"}
+                            {language === Language.HINGLISH ? "WhatsApp par bhejein" : "Share on WhatsApp"}
                           </button>
                           <button 
                             onClick={() => copyToClipboard(msg.content, i)}
@@ -982,6 +986,22 @@ export default function App() {
                 />
               </motion.div>
             )}
+
+            {activeTab === AppTab.CLIENTS && (
+              <motion.div
+                key="clients"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="absolute inset-0 z-50 bg-slate-50 overflow-y-auto"
+              >
+                <Clients 
+                  onClose={() => setActiveTab(AppTab.DASHBOARD)}
+                  language={language}
+                  translations={t}
+                />
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </main>
@@ -990,6 +1010,7 @@ export default function App() {
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-premium-border px-4 py-3 flex justify-around items-center z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         {[
           { id: AppTab.DASHBOARD, icon: Calendar, label: t.bookings },
+          { id: AppTab.CLIENTS, icon: Users, label: t.clients },
           { id: AppTab.STRATEGY, icon: LayoutDashboard, label: t.strategy },
           { id: AppTab.MESSAGES, icon: MessageSquareText, label: t.messages },
           { id: AppTab.INSIGHTS, icon: TrendingUp, label: t.insights },
