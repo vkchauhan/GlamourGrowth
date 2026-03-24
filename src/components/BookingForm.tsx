@@ -12,7 +12,9 @@ import {
   User,
   Phone,
   Camera,
-  FileText
+  FileText,
+  Clock,
+  MapPin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -75,6 +77,10 @@ export default function BookingForm({ onClose, onSuccess, language, translations
     client_name: '',
     client_phone: '',
     date: new Date().toISOString().split('T')[0],
+    time: '',
+    location: '',
+    status: 'confirmed' as Booking['status'],
+    advance_paid: 0,
     selectedServices: [] as BookingService[],
     sessionNotes: '',
     photos: [] as string[]
@@ -278,6 +284,10 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         client_name: formData.client_name,
         client_phone: formData.client_phone,
         date: formData.date,
+        time: formData.time,
+        location: formData.location,
+        status: formData.status,
+        advance_paid: formData.advance_paid,
         services: formData.selectedServices,
         total_amount: totalAmount,
         sessionNotes: formData.sessionNotes,
@@ -290,6 +300,10 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         client_name: formData.client_name,
         client_phone: formData.client_phone,
         date: formData.date,
+        time: formData.time,
+        location: formData.location,
+        status: formData.status,
+        advance_paid: formData.advance_paid,
         services: formData.selectedServices,
         total_amount: totalAmount,
         sessionNotes: formData.sessionNotes,
@@ -426,15 +440,75 @@ export default function BookingForm({ onClose, onSuccess, language, translations
               </div>
             </div>
 
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+              <div className="space-y-2 lg:space-y-3">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
+                  <Calendar className="w-3 h-3 text-premium-gold" />
+                  {t.date}
+                </label>
+                <input 
+                  type="date" 
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
+                />
+              </div>
+              <div className="space-y-2 lg:space-y-3">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
+                  <Clock className="w-3 h-3 text-premium-gold" />
+                  {t.time || "Time"}
+                </label>
+                <input 
+                  type="time" 
+                  value={formData.time}
+                  onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                  className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+              <div className="space-y-2 lg:space-y-3">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
+                  <Check className="w-3 h-3 text-premium-gold" />
+                  {t.status || "Status"}
+                </label>
+                <select 
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as Booking['status'] })}
+                  className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base appearance-none"
+                >
+                  <option value="inquiry">Inquiry</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="completed">Completed / Income</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div className="space-y-2 lg:space-y-3">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
+                  <IndianRupee className="w-3 h-3 text-premium-gold" />
+                  {t.advancePaid || "Advance Paid"}
+                </label>
+                <input 
+                  type="number" 
+                  placeholder="0"
+                  value={formData.advance_paid}
+                  onChange={(e) => setFormData({ ...formData, advance_paid: Number(e.target.value) })}
+                  className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
+                />
+              </div>
+            </div>
+
             <div className="space-y-2 lg:space-y-3">
               <label className="text-[10px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold flex items-center gap-2">
-                <Calendar className="w-3 h-3 text-premium-gold" />
-                {t.date}
+                <Plus className="w-3 h-3 text-premium-gold" />
+                {t.location || "Location / Venue"}
               </label>
               <input 
-                type="date" 
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                type="text" 
+                placeholder="Studio or Client Address"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
               />
             </div>

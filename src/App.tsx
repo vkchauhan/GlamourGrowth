@@ -26,7 +26,8 @@ import {
   MessageCircle,
   Share2,
   Users,
-  User
+  User,
+  Clock
 } from "lucide-react";
 import { 
   BarChart, 
@@ -65,6 +66,7 @@ import DailyGrowthScreen from "./pages/DailyGrowthScreen";
 import RevenueDashboard from "./pages/RevenueDashboard";
 import Clients from "./pages/Clients";
 import Profile from "./pages/Profile";
+import { ScheduleView } from "./components/ScheduleView";
 import { Booking, BookingInsights, Client } from "./types";
 import { BookingInsightsService } from "./services/BookingInsightsService";
 import { getClients } from "./services/bookingService";
@@ -492,12 +494,13 @@ export default function App() {
 
         <nav className="flex-1 px-6 space-y-2">
           {[
-            { id: AppTab.DASHBOARD, label: t.bookings, icon: Calendar },
+            { id: AppTab.DASHBOARD, label: t.overview || "Overview", icon: LayoutDashboard },
+            { id: AppTab.SCHEDULE, label: t.schedule || "Schedule", icon: Calendar },
             { id: AppTab.CLIENTS, label: t.beautyLog, icon: Users },
             { id: AppTab.PROFILE, label: t.myStudio, icon: User },
-            { id: AppTab.STRATEGY, label: t.festivalStrategy, icon: LayoutDashboard },
+            { id: AppTab.STRATEGY, label: t.festivalStrategy, icon: Sparkles },
             { id: AppTab.MESSAGES, label: t.messages, icon: MessageSquareText },
-            { id: AppTab.GROWTH, label: t.dailyGrowthTask, icon: Sparkles },
+            { id: AppTab.GROWTH, label: t.dailyGrowthTask, icon: TrendingUp },
             { id: AppTab.INSIGHTS, label: t.growthInsights, icon: TrendingUp },
             { id: AppTab.TRY_ON, label: t.virtualTryOn, icon: Sparkles, comingSoon: true },
           ].map((item) => (
@@ -569,6 +572,21 @@ export default function App() {
       <main className="flex-1 overflow-y-auto relative pb-24 lg:pb-0">
         <div className="max-w-5xl mx-auto p-6 lg:p-16">
           <AnimatePresence mode="wait">
+            {activeTab === AppTab.SCHEDULE && (
+              <motion.div
+                key="schedule"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="h-full"
+              >
+                <ScheduleView 
+                  onBack={() => setActiveTab(AppTab.DASHBOARD)} 
+                  onAddBooking={() => setIsAddingIncome(true)} 
+                />
+              </motion.div>
+            )}
+
             {activeTab === AppTab.DASHBOARD && (
               <motion.div
                 key="dashboard"
@@ -1123,10 +1141,10 @@ export default function App() {
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-premium-border px-4 py-3 flex justify-around items-center z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         {[
-          { id: AppTab.DASHBOARD, icon: Calendar, label: t.bookings },
-          { id: AppTab.REVENUE, icon: IndianRupee, label: t.totalRevenue },
+          { id: AppTab.DASHBOARD, icon: LayoutDashboard, label: t.overview || "Overview" },
+          { id: AppTab.SCHEDULE, icon: Calendar, label: t.schedule || "Schedule" },
           { id: AppTab.CLIENTS, icon: Users, label: t.beautyLog },
-          { id: AppTab.STRATEGY, icon: LayoutDashboard, label: t.strategy },
+          { id: AppTab.REVENUE, icon: IndianRupee, label: t.totalRevenue },
           { id: AppTab.PROFILE, icon: User, label: t.profile },
         ].map((item) => (
           <button

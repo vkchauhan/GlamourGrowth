@@ -6,11 +6,11 @@ import {
   onSnapshot
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
-import { ArtistProfile } from "../types";
+import { UserProfile } from "../types";
 
 const PROFILE_COLLECTION = "artist_profiles";
 
-export async function getProfile(): Promise<ArtistProfile | null> {
+export async function getProfile(): Promise<UserProfile | null> {
   if (!auth.currentUser) return null;
   
   try {
@@ -18,7 +18,7 @@ export async function getProfile(): Promise<ArtistProfile | null> {
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
-      return docSnap.data() as ArtistProfile;
+      return docSnap.data() as UserProfile;
     }
     return null;
   } catch (error) {
@@ -27,7 +27,7 @@ export async function getProfile(): Promise<ArtistProfile | null> {
   }
 }
 
-export async function saveProfile(profile: ArtistProfile): Promise<void> {
+export async function saveProfile(profile: UserProfile): Promise<void> {
   if (!auth.currentUser) return;
   
   try {
@@ -42,7 +42,7 @@ export async function saveProfile(profile: ArtistProfile): Promise<void> {
   }
 }
 
-export function subscribeToProfile(callback: (profile: ArtistProfile | null) => void) {
+export function subscribeToProfile(callback: (profile: UserProfile | null) => void) {
   if (!auth.currentUser) {
     callback(null);
     return () => {};
@@ -51,7 +51,7 @@ export function subscribeToProfile(callback: (profile: ArtistProfile | null) => 
   const docRef = doc(db, PROFILE_COLLECTION, auth.currentUser.uid);
   return onSnapshot(docRef, (docSnap) => {
     if (docSnap.exists()) {
-      callback(docSnap.data() as ArtistProfile);
+      callback(docSnap.data() as UserProfile);
     } else {
       callback(null);
     }

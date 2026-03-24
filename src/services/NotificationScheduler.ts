@@ -34,7 +34,8 @@ export class NotificationScheduler {
         client_name: b.name || b.client_name || "",
         date: b.date || "",
         services: b.services || [],
-        total_amount: b.price || b.total_amount || 0
+        total_amount: b.price || b.total_amount || 0,
+        status: b.status || 'completed'
       }));
       const insights = BookingInsightsService.analyze(bookings);
 

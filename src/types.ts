@@ -15,6 +15,7 @@ export enum AppTab {
   REVENUE = "revenue",
   CLIENTS = "clients",
   PROFILE = "profile",
+  SCHEDULE = "schedule",
 }
 
 export enum Language {
@@ -41,8 +42,12 @@ export interface Booking {
   client_name: string;
   client_phone?: string;
   date: string;
+  time?: string;
+  location?: string;
   services: BookingService[];
   total_amount: number;
+  advance_paid?: number;
+  status: 'inquiry' | 'confirmed' | 'completed' | 'cancelled';
   photos?: string[];
   sessionNotes?: string;
   created_at?: string;

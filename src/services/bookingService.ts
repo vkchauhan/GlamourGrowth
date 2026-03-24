@@ -62,7 +62,11 @@ export async function saveBooking(data: any) {
       client_phone: data.client_phone || data.phone || null,
       services: data.services || [],
       total_amount: data.total_amount || data.price || 0,
+      advance_paid: data.advance_paid || 0,
       date: data.date || new Date().toISOString().split('T')[0],
+      time: data.time || "",
+      location: data.location || "",
+      status: data.status || 'confirmed',
       photos: data.photos || [],
       sessionNotes: data.sessionNotes || "",
       createdAt: serverTimestamp()
@@ -71,7 +75,7 @@ export async function saveBooking(data: any) {
     const docRef = await addDoc(collection(db, "bookings"), bookingData);
     
     // Also update or create the client in the clients collection
-    if (bookingData.client_name && bookingData.client_name !== "Unknown Client") {
+    if (bookingData.client_name && bookingData.client_name !== "Unknown Client" && bookingData.status === 'completed') {
       if (bookingData.client_id) {
         // If we have a client_id, update the client's stats
         const clientRef = doc(db, "clients", bookingData.client_id);
@@ -235,7 +239,7 @@ export async function getBookings(): Promise<Booking[]> {
 }
 
 export function subscribeToBookings(callback: (bookings: any[]) => void) {
-  const q = query(collection(db, "bookings"), orderBy("createdAt", "desc"));
+  const q = query(collection(db, "bookings"), orderBy("date", "desc"), orderBy("createdAt", "desc"));
   return onSnapshot(q, (snapshot) => {
     const bookings = snapshot.docs.map(doc => ({
       booking_id: doc.id,
@@ -245,6 +249,51 @@ export function subscribeToBookings(callback: (bookings: any[]) => void) {
   }, (error) => {
     handleFirestoreError(error, OperationType.LIST, "bookings");
   });
+}
+
+export function subscribeToUpcomingBookings(callback: (bookings: Booking[]) => void) {
+  const today = new Date().toISOString().split('T')[0];
+  const q = query(
+    collection(db, "bookings"),
+    where("status", "in", ["confirmed", "inquiry"]),
+    where("date", ">=", today),
+    orderBy("date", "asc")
+  );
+  
+  return onSnapshot(q, (snapshot) => {
+    const bookings = snapshot.docs.map(doc => ({
+      booking_id: doc.id,
+      ...doc.data()
+    } as Booking));
+    callback(bookings);
+  }, (error) => {
+    handleFirestoreError(error, OperationType.LIST, "bookings");
+  });
+}
+
+export async function updateBookingStatus(bookingId: string, status: Booking['status']) {
+  try {
+    const bookingRef = doc(db, "bookings", bookingId);
+    await updateDoc(bookingRef, { status, updatedAt: serverTimestamp() });
+    
+    // If completed, we might want to update client stats here as well
+    if (status === 'completed') {
+      const snap = await getDoc(bookingRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.client_id) {
+          const clientRef = doc(db, "clients", data.client_id);
+          await updateDoc(clientRef, {
+            lastBookingAt: serverTimestamp(),
+            totalSpend: increment(data.total_amount),
+            visitCount: increment(1)
+          });
+        }
+      }
+    }
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `bookings/${bookingId}`);
+  }
 }
 
 export async function deleteBooking(id: string) {

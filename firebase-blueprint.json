@@ -9,8 +9,10 @@
         "name": { "type": "string" },
         "phone": { "type": "string" },
         "date": { "type": "string", "format": "date" },
-        "booking_time": { "type": "string" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
         "price": { "type": "number" },
+        "advance_paid": { "type": "number" },
         "services": {
           "type": "array",
           "items": {
@@ -22,7 +24,7 @@
             }
           }
         },
-        "status": { "type": "string", "enum": ["confirmed", "pending", "cancelled"] },
+        "status": { "type": "string", "enum": ["inquiry", "confirmed", "completed", "cancelled"] },
         "photos": {
           "type": "array",
           "items": { "type": "string" }
@@ -30,7 +32,7 @@
         "sessionNotes": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "date", "price"]
+      "required": ["name", "date", "price", "status"]
     },
     "Client": {
       "title": "Client",
