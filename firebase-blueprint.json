@@ -147,6 +147,24 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["user_id", "amount", "category", "date"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "The profile of the makeup artist",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "expertise": { "type": "array", "items": { "type": "string" } },
+        "experience": { "type": "number" },
+        "areas": { "type": "array", "items": { "type": "string" } },
+        "bio": { "type": "string" },
+        "profileImage": { "type": "string" },
+        "phone": { "type": "string" },
+        "instagram": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name"]
     }
   },
   "firestore": {
@@ -181,6 +199,10 @@
     "expenses": {
       "schema": "Expense",
       "description": "Collection of business expenses"
+    },
+    "artist_profiles": {
+      "schema": "UserProfile",
+      "description": "Collection of artist profiles"
     }
   }
 }

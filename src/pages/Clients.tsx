@@ -102,7 +102,7 @@ const Clients: React.FC<ClientsProps> = ({ onClose, language, translations: t })
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-premium-gold/10 flex items-center justify-center text-premium-gold font-bold text-lg">
-                    {client.name.charAt(0).toUpperCase()}
+                    {client.name?.charAt(0).toUpperCase() || '?'}
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 group-hover:text-premium-gold transition-colors">

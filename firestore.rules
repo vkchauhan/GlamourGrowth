@@ -122,5 +122,10 @@ service cloud.firestore {
                       request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
     }
+
+    // Artist Profiles: Only owner can read/write
+    match /artist_profiles/{profileId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == profileId;
+    }
   }
 }

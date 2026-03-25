@@ -253,7 +253,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings, 
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                {range.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                {range.split('-').map(word => (word?.charAt(0).toUpperCase() || '?') + word.slice(1)).join(' ')}
               </button>
             ))}
           </div>
@@ -481,7 +481,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ onClose, bookings, 
               {data?.topClients.map((client, index) => (
                 <div key={index} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
-                    {(client.name || "?").charAt(0)}
+                    {client.name?.charAt(0).toUpperCase() || '?'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-slate-900 truncate">{client.name}</p>

@@ -225,7 +225,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold">
-                            {booking.client_name.charAt(0)}
+                            {booking.client_name?.charAt(0) || '?'}
                           </div>
                           <div>
                             <h4 className="font-bold text-slate-900">{booking.client_name}</h4>

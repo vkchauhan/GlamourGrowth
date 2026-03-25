@@ -326,7 +326,7 @@ export default function App() {
     const fetchContext = async () => {
       try {
         // Fetch Artist Profile
-        const profileRef = doc(db, 'profiles', user.uid);
+        const profileRef = doc(db, 'artist_profiles', user.uid);
         const profileSnap = await getDoc(profileRef);
         if (profileSnap.exists()) {
           setArtistProfile(profileSnap.data());

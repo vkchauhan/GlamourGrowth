@@ -122,7 +122,7 @@ const ClientProfile: React.FC<ClientProfileProps> = ({ clientId, onBack, languag
 
         <div className="flex items-center gap-4 relative z-10">
           <div className="w-20 h-20 rounded-full bg-white/10 border-2 border-premium-gold/30 flex items-center justify-center text-premium-gold text-3xl font-black shadow-xl">
-            {client.name.charAt(0).toUpperCase()}
+            {client.name?.charAt(0).toUpperCase() || '?'}
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight">{client.name}</h1>
