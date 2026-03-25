@@ -12,11 +12,15 @@ import {
   Plus,
   Filter,
   MoreVertical,
-  ArrowLeft
+  ArrowLeft,
+  LayoutList,
+  CalendarDays,
+  X
 } from 'lucide-react';
 import { Booking } from '../types';
-import { subscribeToUpcomingBookings, updateBookingStatus } from '../services/bookingService';
-import { format, parseISO, isToday, isTomorrow, addDays, startOfToday } from 'date-fns';
+import { subscribeToUpcomingBookings, updateBookingStatus, subscribeToMonthlyBookings } from '../services/bookingService';
+import { format, parseISO, isToday, isTomorrow, addDays, startOfToday, isSameDay } from 'date-fns';
+import { CalendarView } from './CalendarView';
 
 interface ScheduleViewProps {
   onBack: () => void;
@@ -27,18 +31,36 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'inquiry'>('all');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   useEffect(() => {
-    const unsubscribe = subscribeToUpcomingBookings((data) => {
-      setBookings(data);
-      setLoading(false);
-    });
+    let unsubscribe: () => void;
+    
+    if (viewMode === 'calendar' || selectedDate) {
+      // If we're in calendar mode or have a specific date selected, 
+      // we need a broader range of bookings
+      const targetDate = selectedDate || currentMonth;
+      unsubscribe = subscribeToMonthlyBookings(targetDate, (data) => {
+        setBookings(data);
+        setLoading(false);
+      });
+    } else {
+      // Default upcoming list view
+      unsubscribe = subscribeToUpcomingBookings((data) => {
+        setBookings(data);
+        setLoading(false);
+      });
+    }
+    
     return () => unsubscribe();
-  }, []);
+  }, [viewMode, currentMonth, selectedDate]);
 
   const filteredBookings = bookings.filter(b => {
-    if (filter === 'all') return true;
-    return b.status === filter;
+    const matchesFilter = filter === 'all' || b.status === filter;
+    const matchesDate = !selectedDate || isSameDay(parseISO(b.date), selectedDate);
+    return matchesFilter && matchesDate;
   });
 
   const getDayLabel = (dateStr: string) => {
@@ -76,21 +98,51 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
           </button>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {(['all', 'confirmed', 'inquiry'] as const).map((f) => (
+        {/* Filters and View Toggle */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar flex-1">
+            {selectedDate && (
+              <button
+                onClick={() => setSelectedDate(null)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 whitespace-nowrap"
+              >
+                {format(selectedDate, 'MMM d')}
+                <X className="w-3 h-3" />
+              </button>
+            )}
+            {(['all', 'confirmed', 'inquiry'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  filter === f 
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex bg-slate-100 p-1 rounded-xl">
             <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                filter === f 
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-lg transition-all ${
+                viewMode === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'
               }`}
             >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+              <LayoutList className="w-4 h-4" />
             </button>
-          ))}
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`p-1.5 rounded-lg transition-all ${
+                viewMode === 'calendar' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -100,6 +152,40 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
             <p className="text-slate-500 font-medium">Loading your schedule...</p>
+          </div>
+        ) : viewMode === 'calendar' ? (
+          <div className="space-y-6">
+            <CalendarView 
+              bookings={bookings} 
+              currentMonth={currentMonth}
+              onMonthChange={setCurrentMonth}
+              onDateSelect={(date) => {
+                setSelectedDate(date);
+                setViewMode('list');
+              }} 
+            />
+            
+            {/* Quick Summary for the month */}
+            <div className="bg-indigo-600 rounded-3xl p-6 text-white shadow-xl shadow-indigo-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-white/20 rounded-xl">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold">Wedding Season Alert</h3>
+              </div>
+              <p className="text-indigo-100 text-sm leading-relaxed mb-4">
+                You have {bookings.filter(b => b.status === 'confirmed').length} confirmed bookings this month. 
+                Weekends in Nov-Feb are high demand. Consider increasing your rates for the remaining slots!
+              </p>
+              <div className="flex gap-2">
+                <div className="bg-white/10 px-3 py-1 rounded-lg text-xs font-bold">
+                  {bookings.filter(b => b.status === 'confirmed').length} Confirmed
+                </div>
+                <div className="bg-white/10 px-3 py-1 rounded-lg text-xs font-bold">
+                  {bookings.filter(b => b.status === 'inquiry').length} Inquiries
+                </div>
+              </div>
+            </div>
           </div>
         ) : filteredBookings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center">

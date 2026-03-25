@@ -2,6 +2,7 @@ import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, deleteDoc
 import { db, auth } from "./firebase";
 
 import { Booking, Service, BookingService, Client } from "../types";
+import { startOfMonth, endOfMonth } from "date-fns";
 
 enum OperationType {
   CREATE = 'create',
@@ -257,6 +258,28 @@ export function subscribeToUpcomingBookings(callback: (bookings: Booking[]) => v
     collection(db, "bookings"),
     where("status", "in", ["confirmed", "inquiry"]),
     where("date", ">=", today),
+    orderBy("date", "asc")
+  );
+  
+  return onSnapshot(q, (snapshot) => {
+    const bookings = snapshot.docs.map(doc => ({
+      booking_id: doc.id,
+      ...doc.data()
+    } as Booking));
+    callback(bookings);
+  }, (error) => {
+    handleFirestoreError(error, OperationType.LIST, "bookings");
+  });
+}
+
+export function subscribeToMonthlyBookings(date: Date, callback: (bookings: Booking[]) => void) {
+  const start = startOfMonth(date).toISOString().split('T')[0];
+  const end = endOfMonth(date).toISOString().split('T')[0];
+  
+  const q = query(
+    collection(db, "bookings"),
+    where("date", ">=", start),
+    where("date", "<=", end),
     orderBy("date", "asc")
   );
   
