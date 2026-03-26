@@ -24,7 +24,7 @@ import { CalendarView } from './CalendarView';
 
 interface ScheduleViewProps {
   onBack: () => void;
-  onAddBooking: () => void;
+  onAddBooking: (date?: string) => void;
 }
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking }) => {
@@ -91,7 +91,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
             <h1 className="text-xl font-bold text-slate-900">Schedule</h1>
           </div>
           <button 
-            onClick={onAddBooking}
+            onClick={() => onAddBooking(selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined)}
             className="bg-indigo-600 text-white p-2 rounded-full shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
           >
             <Plus className="w-6 h-6" />
@@ -160,8 +160,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
               currentMonth={currentMonth}
               onMonthChange={setCurrentMonth}
               onDateSelect={(date) => {
-                setSelectedDate(date);
-                setViewMode('list');
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const hasBookings = bookings.some(b => b.date === dateStr);
+                if (hasBookings) {
+                  setSelectedDate(date);
+                  setViewMode('list');
+                } else {
+                  onAddBooking(dateStr);
+                }
               }} 
             />
             
@@ -197,7 +203,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
               Your schedule is clear! Start recording new bookings to see them here.
             </p>
             <button
-              onClick={onAddBooking}
+              onClick={() => onAddBooking(selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined)}
               className="bg-white border-2 border-indigo-600 text-indigo-600 px-6 py-2 rounded-xl font-bold hover:bg-indigo-50 transition-all"
             >
               Add New Booking

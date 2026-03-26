@@ -33,11 +33,12 @@ interface BookingFormProps {
   onSuccess: (booking: Booking) => void;
   language: 'en' | 'hi';
   translations: any;
+  initialDate?: string;
 }
 
 const LAST_PRICES_KEY = 'glamour_growth_service_prices';
 
-export default function BookingForm({ onClose, onSuccess, language, translations: t }: BookingFormProps) {
+export default function BookingForm({ onClose, onSuccess, language, translations: t, initialDate }: BookingFormProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -76,7 +77,7 @@ export default function BookingForm({ onClose, onSuccess, language, translations
     client_id: '',
     client_name: '',
     client_phone: '',
-    date: new Date().toISOString().split('T')[0],
+    date: initialDate || new Date().toISOString().split('T')[0],
     time: '',
     location: '',
     status: 'confirmed' as Booking['status'],

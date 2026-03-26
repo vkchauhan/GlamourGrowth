@@ -93,6 +93,7 @@ export default function App() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isAddingIncome, setIsAddingIncome] = useState(false);
   const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const [bookingDefaultDate, setBookingDefaultDate] = useState<string | undefined>(undefined);
 
   // Assistant States
   const [strategy, setStrategy] = useState<any>(null);
@@ -582,7 +583,10 @@ export default function App() {
               >
                 <ScheduleView 
                   onBack={() => setActiveTab(AppTab.DASHBOARD)} 
-                  onAddBooking={() => setIsAddingIncome(true)} 
+                  onAddBooking={(date) => {
+                    setBookingDefaultDate(date);
+                    setIsAddingIncome(true);
+                  }} 
                 />
               </motion.div>
             )}
@@ -1171,10 +1175,17 @@ export default function App() {
       <AnimatePresence>
         {isAddingIncome && (
           <BookingForm 
-            onClose={() => setIsAddingIncome(false)}
-            onSuccess={handleAddBooking}
+            onClose={() => {
+              setIsAddingIncome(false);
+              setBookingDefaultDate(undefined);
+            }}
+            onSuccess={(booking) => {
+              handleAddBooking(booking);
+              setBookingDefaultDate(undefined);
+            }}
             language={language}
             translations={t}
+            initialDate={bookingDefaultDate}
           />
         )}
         {isAddingExpense && (
