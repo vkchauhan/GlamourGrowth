@@ -25,9 +25,10 @@ import { CalendarView } from './CalendarView';
 interface ScheduleViewProps {
   onBack: () => void;
   onAddBooking: (date?: string) => void;
+  onCompleteAppointment: (booking: Booking) => void;
 }
 
-export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking }) => {
+export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking, onCompleteAppointment }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'inquiry'>('all');
@@ -88,7 +89,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
             >
               <ArrowLeft className="w-5 h-5 text-slate-600" />
             </button>
-            <h1 className="text-xl font-bold text-slate-900">Schedule</h1>
+            <h1 className="text-xl font-bold text-slate-900">Appointments</h1>
           </div>
           <button 
             onClick={() => onAddBooking(selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined)}
@@ -206,7 +207,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
               onClick={() => onAddBooking(selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined)}
               className="bg-white border-2 border-indigo-600 text-indigo-600 px-6 py-2 rounded-xl font-bold hover:bg-indigo-50 transition-all"
             >
-              Add New Booking
+              Add New Appointment
             </button>
           </div>
         ) : (
@@ -268,7 +269,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
                         <div className="flex gap-2">
                           {booking.status !== 'completed' && (
                             <button
-                              onClick={() => handleStatusChange(booking.booking_id!, 'completed')}
+                              onClick={() => onCompleteAppointment(booking)}
                               className="flex items-center gap-1 text-xs font-bold text-green-600 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
                             >
                               <CheckCircle2 className="w-4 h-4" />

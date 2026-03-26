@@ -94,6 +94,7 @@ export default function App() {
   const [isAddingIncome, setIsAddingIncome] = useState(false);
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [bookingDefaultDate, setBookingDefaultDate] = useState<string | undefined>(undefined);
+  const [completingBooking, setCompletingBooking] = useState<Booking | null>(null);
 
   // Assistant States
   const [strategy, setStrategy] = useState<any>(null);
@@ -587,6 +588,10 @@ export default function App() {
                     setBookingDefaultDate(date);
                     setIsAddingIncome(true);
                   }} 
+                  onCompleteAppointment={(booking) => {
+                    setCompletingBooking(booking);
+                    setIsAddingIncome(true);
+                  }}
                 />
               </motion.div>
             )}
@@ -610,7 +615,7 @@ export default function App() {
                       className="flex-1 lg:flex-none bg-premium-ink text-white px-8 py-4 rounded-full text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#333] transition-all shadow-2xl shadow-black/10 hover:scale-105 active:scale-95"
                     >
                       <Plus className="w-4 h-4 text-premium-gold" />
-                      {t.recordBooking}
+                      {t.recordAppointment}
                     </button>
                     <button 
                       onClick={() => setIsAddingExpense(true)}
@@ -682,7 +687,7 @@ export default function App() {
                     </p>
                   </button>
                   <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm">
-                    <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.totalBookings}</p>
+                    <p className="text-[10px] lg:text-[11px] uppercase tracking-[0.2em] text-[#8E8E8E] font-bold mb-2 lg:mb-3">{t.totalAppointments}</p>
                     <p className="text-3xl lg:text-5xl font-serif font-medium">{incomeEntries.length}</p>
                   </div>
                   <div className="bg-white p-6 lg:p-10 rounded-[32px] lg:rounded-[40px] border border-premium-border shadow-sm">
@@ -1178,14 +1183,18 @@ export default function App() {
             onClose={() => {
               setIsAddingIncome(false);
               setBookingDefaultDate(undefined);
+              setCompletingBooking(null);
             }}
             onSuccess={(booking) => {
               handleAddBooking(booking);
               setBookingDefaultDate(undefined);
+              setCompletingBooking(null);
             }}
             language={language}
             translations={t}
             initialDate={bookingDefaultDate}
+            mode={completingBooking ? 'complete' : 'create'}
+            initialData={completingBooking || undefined}
           />
         )}
         {isAddingExpense && (

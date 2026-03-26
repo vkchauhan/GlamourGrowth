@@ -34,11 +34,21 @@ interface BookingFormProps {
   language: 'en' | 'hi';
   translations: any;
   initialDate?: string;
+  mode?: 'create' | 'complete';
+  initialData?: Booking;
 }
 
 const LAST_PRICES_KEY = 'glamour_growth_service_prices';
 
-export default function BookingForm({ onClose, onSuccess, language, translations: t, initialDate }: BookingFormProps) {
+export default function BookingForm({ 
+  onClose, 
+  onSuccess, 
+  language, 
+  translations: t, 
+  initialDate,
+  mode = 'create',
+  initialData
+}: BookingFormProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,17 +84,18 @@ export default function BookingForm({ onClose, onSuccess, language, translations
   }, [isDropdownOpen]);
   
   const [formData, setFormData] = useState({
-    client_id: '',
-    client_name: '',
-    client_phone: '',
-    date: initialDate || new Date().toISOString().split('T')[0],
-    time: '',
-    location: '',
-    status: 'confirmed' as Booking['status'],
-    advance_paid: 0,
-    selectedServices: [] as BookingService[],
-    sessionNotes: '',
-    photos: [] as string[]
+    booking_id: initialData?.booking_id || '',
+    client_id: initialData?.client_id || '',
+    client_name: initialData?.client_name || '',
+    client_phone: initialData?.client_phone || '',
+    date: initialData?.date || initialDate || new Date().toISOString().split('T')[0],
+    time: initialData?.time || '',
+    location: initialData?.location || '',
+    status: mode === 'complete' ? 'completed' : (initialData?.status || 'confirmed') as Booking['status'],
+    advance_paid: initialData?.advance_paid || 0,
+    selectedServices: initialData?.services || [] as BookingService[],
+    sessionNotes: initialData?.sessionNotes || '',
+    photos: initialData?.photos || [] as string[]
   });
 
   const [clientSuggestions, setClientSuggestions] = useState<Client[]>([]);
@@ -281,6 +292,7 @@ export default function BookingForm({ onClose, onSuccess, language, translations
     setIsSubmitting(true);
     try {
         const result = await saveBooking({
+        booking_id: formData.booking_id || undefined,
         client_id: formData.client_id || undefined,
         client_name: formData.client_name,
         client_phone: formData.client_phone,
@@ -291,6 +303,7 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         advance_paid: formData.advance_paid,
         services: formData.selectedServices,
         total_amount: totalAmount,
+        previous_total_amount: initialData?.total_amount || 0,
         sessionNotes: formData.sessionNotes,
         photos: formData.photos
       });
@@ -349,8 +362,12 @@ export default function BookingForm({ onClose, onSuccess, language, translations
         <div className="p-8 lg:p-12 space-y-8 lg:space-y-10 overflow-y-auto flex-1">
           <header className="flex justify-between items-start">
             <div>
-              <h3 className="text-2xl lg:text-3xl font-serif font-medium italic">{t.recordNewBooking}</h3>
-              <p className="text-[#666] text-base lg:text-lg font-light italic mt-1 lg:mt-2">{t.recordNewBookingSub}</p>
+              <h3 className="text-2xl lg:text-3xl font-serif font-medium italic">
+                {mode === 'complete' ? t.completeAppointment : t.recordNewAppointment}
+              </h3>
+              <p className="text-[#666] text-base lg:text-lg font-light italic mt-1 lg:mt-2">
+                {mode === 'complete' ? t.completeAppointmentSub : t.recordNewAppointmentSub}
+              </p>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-premium-bg rounded-full transition-colors">
               <X className="w-6 h-6 text-[#8E8E8E]" />
@@ -495,7 +512,11 @@ export default function BookingForm({ onClose, onSuccess, language, translations
                   placeholder="0"
                   value={formData.advance_paid}
                   onChange={(e) => setFormData({ ...formData, advance_paid: Number(e.target.value) })}
-                  className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base"
+                  readOnly={mode === 'complete'}
+                  className={cn(
+                    "w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base",
+                    mode === 'complete' && "opacity-60 cursor-not-allowed"
+                  )}
                 />
               </div>
             </div>
@@ -758,7 +779,7 @@ export default function BookingForm({ onClose, onSuccess, language, translations
             disabled={isSubmitting || !formData.client_name || formData.selectedServices.length === 0}
             className="order-1 lg:order-2 flex-1 bg-premium-ink text-white px-8 lg:px-10 py-4 lg:py-5 rounded-2xl font-bold hover:bg-[#333] transition-all shadow-2xl shadow-black/10 text-sm lg:text-base disabled:opacity-50"
           >
-            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : t.saveBooking}
+            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : (mode === 'complete' ? t.completeAppointment : t.saveAppointment)}
           </button>
         </div>
       </motion.div>

@@ -57,7 +57,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 
 export async function saveBooking(data: any) {
   try {
-    const bookingData = {
+    const bookingData: any = {
       client_id: data.client_id || null,
       client_name: data.client_name || data.name || "Unknown Client",
       client_phone: data.client_phone || data.phone || null,
@@ -70,10 +70,19 @@ export async function saveBooking(data: any) {
       status: data.status || 'confirmed',
       photos: data.photos || [],
       sessionNotes: data.sessionNotes || "",
-      createdAt: serverTimestamp()
+      updatedAt: serverTimestamp()
     };
+
+    let bookingId = data.booking_id;
     
-    const docRef = await addDoc(collection(db, "bookings"), bookingData);
+    if (bookingId) {
+      const bookingRef = doc(db, "bookings", bookingId);
+      await updateDoc(bookingRef, bookingData);
+    } else {
+      bookingData.createdAt = serverTimestamp();
+      const docRef = await addDoc(collection(db, "bookings"), bookingData);
+      bookingId = docRef.id;
+    }
     
     // Also update or create the client in the clients collection
     if (bookingData.client_name && bookingData.client_name !== "Unknown Client" && bookingData.status === 'completed') {
@@ -84,8 +93,8 @@ export async function saveBooking(data: any) {
           name: bookingData.client_name,
           phone: bookingData.client_phone,
           lastBookingAt: serverTimestamp(),
-          totalSpend: increment(bookingData.total_amount),
-          visitCount: increment(1)
+          totalSpend: increment(bookingData.total_amount - (data.previous_total_amount || 0)),
+          visitCount: data.booking_id ? increment(0) : increment(1) // Only increment visit if it's a new booking
         });
       } else {
         // Check if client exists by name and phone to avoid duplicates
@@ -116,16 +125,16 @@ export async function saveBooking(data: any) {
           await updateDoc(clientDoc.ref, {
             name_lowercase: bookingData.client_name.toLowerCase(),
             lastBookingAt: serverTimestamp(),
-            totalSpend: increment(bookingData.total_amount),
-            visitCount: increment(1)
+            totalSpend: increment(bookingData.total_amount - (data.previous_total_amount || 0)),
+            visitCount: data.booking_id ? increment(0) : increment(1)
           });
         }
       }
     }
     
-    return { booking_id: docRef.id };
+    return { booking_id: bookingId };
   } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, "bookings");
+    handleFirestoreError(error, data.booking_id ? OperationType.UPDATE : OperationType.CREATE, "bookings");
   }
 }
 
