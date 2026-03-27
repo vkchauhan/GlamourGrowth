@@ -50,7 +50,8 @@ export interface Booking {
   status: 'inquiry' | 'confirmed' | 'completed' | 'cancelled';
   photos?: string[];
   sessionNotes?: string;
-  created_at?: string;
+  created_at?: any;
+  updated_at?: any;
 }
 
 export interface Client {

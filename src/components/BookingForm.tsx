@@ -1,21 +1,29 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  Plus, 
-  Trash2, 
-  Search, 
-  Check, 
-  ChevronDown, 
-  IndianRupee, 
+  CheckCircle2, 
+  AlertCircle,
+  Plus,
+  Trash2,
+  Filter,
+  MoreVertical,
+  ArrowLeft,
+  LayoutList,
+  CalendarDays,
   X,
-  Loader2,
-  Calendar,
-  User,
-  Phone,
   Camera,
   FileText,
   Clock,
-  MapPin
+  MapPin,
+  Search,
+  Check,
+  ChevronDown,
+  IndianRupee,
+  Loader2,
+  Calendar,
+  User,
+  Phone
 } from 'lucide-react';
+import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -97,6 +105,47 @@ export default function BookingForm({
     sessionNotes: initialData?.sessionNotes || '',
     photos: initialData?.photos || [] as string[]
   });
+
+  const [activeTab, setActiveTab] = useState<'details' | 'timeline'>('details');
+
+  const getTimelineEvents = () => {
+    const events = [];
+    if (initialData?.created_at) {
+      events.push({
+        label: "Appointment Created",
+        date: initialData.created_at.toDate ? initialData.created_at.toDate() : new Date(initialData.created_at),
+        icon: <Plus className="w-3 h-3" />,
+        color: "bg-blue-500"
+      });
+    }
+    if (initialData?.status === 'confirmed') {
+      events.push({
+        label: "Appointment Confirmed",
+        date: initialData.updated_at?.toDate ? initialData.updated_at.toDate() : new Date(),
+        icon: <CheckCircle2 className="w-3 h-3" />,
+        color: "bg-premium-gold"
+      });
+    }
+    if (initialData?.status === 'completed') {
+      events.push({
+        label: "Appointment Completed",
+        date: initialData.updated_at?.toDate ? initialData.updated_at.toDate() : new Date(),
+        icon: <CheckCircle2 className="w-3 h-3" />,
+        color: "bg-green-500"
+      });
+    }
+    if (initialData?.status === 'cancelled') {
+      events.push({
+        label: "Appointment Cancelled",
+        date: initialData.updated_at?.toDate ? initialData.updated_at.toDate() : new Date(),
+        icon: <X className="w-3 h-3" />,
+        color: "bg-red-500"
+      });
+    }
+    return events.sort((a, b) => a.date.getTime() - b.date.getTime());
+  };
+
+  const timelineEvents = useMemo(() => getTimelineEvents(), [initialData]);
 
   const [clientSuggestions, setClientSuggestions] = useState<Client[]>([]);
   const [isSearchingClients, setIsSearchingClients] = useState(false);
@@ -374,7 +423,71 @@ export default function BookingForm({
             </button>
           </header>
 
-          <div className="space-y-6 lg:space-y-8">
+          {/* Tabs for Details vs Timeline */}
+          {mode !== 'create' && (
+            <div className="flex border-b border-premium-border">
+              <button
+                onClick={() => setActiveTab('details')}
+                className={cn(
+                  "px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all relative",
+                  activeTab === 'details' ? "text-premium-ink" : "text-[#8E8E8E] hover:text-premium-ink"
+                )}
+              >
+                Details
+                {activeTab === 'details' && (
+                  <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-premium-gold" />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('timeline')}
+                className={cn(
+                  "px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all relative",
+                  activeTab === 'timeline' ? "text-premium-ink" : "text-[#8E8E8E] hover:text-premium-ink"
+                )}
+              >
+                Timeline
+                {activeTab === 'timeline' && (
+                  <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-premium-gold" />
+                )}
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'timeline' ? (
+            <div className="space-y-8 py-4">
+              {timelineEvents.map((event, idx) => (
+                <div key={idx} className="relative pl-10">
+                  {idx !== timelineEvents.length - 1 && (
+                    <div className="absolute left-[15px] top-6 bottom-[-32px] w-0.5 bg-slate-100" />
+                  )}
+                  <div className={cn(
+                    "absolute left-0 top-0 w-8 h-8 rounded-full flex items-center justify-center text-white shadow-sm z-10",
+                    event.color
+                  )}>
+                    {event.icon}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-premium-ink">{event.label}</h4>
+                    <p className="text-[10px] text-[#8E8E8E] font-medium uppercase tracking-wider mt-1">
+                      {format(event.date, 'PPP p')}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              
+              {mode === 'complete' && initialData?.status !== 'completed' && (
+                <div className="relative pl-10 opacity-50">
+                  <div className="absolute left-0 top-0 w-8 h-8 rounded-full border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300">
+                    <Clock className="w-3 h-3" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-400 italic">Completing Appointment...</h4>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-6 lg:space-y-8">
             {/* Client Info */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
               <div className="space-y-2 lg:space-y-3 relative" ref={clientDropdownRef}>
@@ -680,12 +793,35 @@ export default function BookingForm({
                   ))}
                 </div>
                 
-                <div className="pt-4 border-t border-premium-border flex justify-between items-center">
-                  <span className="text-sm font-bold uppercase tracking-widest text-[#8E8E8E]">{t.totalAmount || "Total Amount"}</span>
-                  <span className="text-2xl font-serif font-bold flex items-center gap-1">
-                    <IndianRupee className="w-5 h-5 text-premium-gold" />
-                    {totalAmount.toLocaleString('en-IN')}
-                  </span>
+                <div className="pt-4 border-t border-premium-border space-y-3">
+                  <div className="flex justify-between items-center text-[#8E8E8E]">
+                    <span className="text-xs uppercase tracking-widest font-bold">{t.totalAmount || "Total Amount"}</span>
+                    <span className="text-lg font-serif font-bold flex items-center gap-1">
+                      <IndianRupee className="w-4 h-4" />
+                      {totalAmount.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center text-[#8E8E8E]">
+                    <span className="text-xs uppercase tracking-widest font-bold">{t.advancePaid || "Advance Paid"}</span>
+                    <span className="text-lg font-serif font-bold flex items-center gap-1 text-premium-gold">
+                      - <IndianRupee className="w-4 h-4" />
+                      {formData.advance_paid.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div className="pt-3 border-t border-dashed border-premium-border flex justify-between items-center">
+                    <span className="text-sm font-bold uppercase tracking-widest text-premium-ink">
+                      {mode === 'complete' ? (t.balanceToCollect || "Balance to Collect") : (t.balanceDue || "Balance Due")}
+                    </span>
+                    <span className={cn(
+                      "text-2xl lg:text-3xl font-serif font-bold flex items-center gap-1",
+                      mode === 'complete' ? "text-green-600" : "text-premium-ink"
+                    )}>
+                      <IndianRupee className="w-5 h-5 lg:w-6 lg:h-6" />
+                      {(totalAmount - formData.advance_paid).toLocaleString('en-IN')}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
@@ -764,7 +900,8 @@ export default function BookingForm({
                 className="w-full p-4 lg:p-5 rounded-2xl border border-premium-border bg-premium-bg focus:outline-none font-medium text-sm lg:text-base min-h-[100px] resize-none"
               />
             </div>
-          </div>
+            </div>
+          )}
         </div>
 
         <div className="p-8 lg:p-12 border-t border-premium-border bg-premium-bg/30 flex flex-col lg:flex-row gap-4 lg:gap-6">

@@ -70,7 +70,7 @@ export async function saveBooking(data: any) {
       status: data.status || 'confirmed',
       photos: data.photos || [],
       sessionNotes: data.sessionNotes || "",
-      updatedAt: serverTimestamp()
+      updated_at: serverTimestamp()
     };
 
     let bookingId = data.booking_id;
@@ -79,7 +79,7 @@ export async function saveBooking(data: any) {
       const bookingRef = doc(db, "bookings", bookingId);
       await updateDoc(bookingRef, bookingData);
     } else {
-      bookingData.createdAt = serverTimestamp();
+      bookingData.created_at = serverTimestamp();
       const docRef = await addDoc(collection(db, "bookings"), bookingData);
       bookingId = docRef.id;
     }
@@ -249,7 +249,7 @@ export async function getBookings(): Promise<Booking[]> {
 }
 
 export function subscribeToBookings(callback: (bookings: any[]) => void) {
-  const q = query(collection(db, "bookings"), orderBy("date", "desc"), orderBy("createdAt", "desc"));
+  const q = query(collection(db, "bookings"), orderBy("date", "desc"), orderBy("created_at", "desc"));
   return onSnapshot(q, (snapshot) => {
     const bookings = snapshot.docs.map(doc => ({
       booking_id: doc.id,
@@ -306,7 +306,7 @@ export function subscribeToMonthlyBookings(date: Date, callback: (bookings: Book
 export async function updateBookingStatus(bookingId: string, status: Booking['status']) {
   try {
     const bookingRef = doc(db, "bookings", bookingId);
-    await updateDoc(bookingRef, { status, updatedAt: serverTimestamp() });
+    await updateDoc(bookingRef, { status, updated_at: serverTimestamp() });
     
     // If completed, we might want to update client stats here as well
     if (status === 'completed') {

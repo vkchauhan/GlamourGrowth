@@ -16,9 +16,17 @@ import {
   ChevronRight,
   User,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Clock,
+  MapPin
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 import { Client, Booking, Language } from "../types";
 import { getClientById, getClientHistory, updateClientProfile } from "../services/bookingService";
 
@@ -263,41 +271,82 @@ const ClientProfile: React.FC<ClientProfileProps> = ({ clientId, onBack, languag
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="space-y-3"
+              className="space-y-6 relative before:absolute before:left-6 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200"
             >
               {history.length > 0 ? history.map((booking, idx) => (
-                <div key={booking.booking_id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{formatDate(booking.date)}</span>
-                      <h4 className="font-bold text-slate-900">
-                        {booking.services?.map(s => s.name).join(", ") || "General Service"}
-                      </h4>
+                <div key={booking.booking_id} className="relative pl-12">
+                  {/* Timeline Dot */}
+                  <div className={cn(
+                    "absolute left-[21px] top-1.5 w-3 h-3 rounded-full border-2 border-white z-10",
+                    booking.status === 'completed' ? "bg-green-500" : 
+                    booking.status === 'cancelled' ? "bg-red-500" : "bg-premium-gold"
+                  )} />
+                  
+                  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-premium-gold transition-all">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{formatDate(booking.date)}</span>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider",
+                            booking.status === 'completed' ? "bg-green-100 text-green-700" : 
+                            booking.status === 'cancelled' ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                          )}>
+                            {booking.status}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-slate-900 leading-tight">
+                          {booking.services?.map(s => s.name).join(", ") || "General Service"}
+                        </h4>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-slate-900">{formatCurrency(booking.total_amount)}</div>
+                        {booking.advance_paid > 0 && (
+                          <div className="text-[9px] text-slate-400 font-medium">
+                            {booking.status === 'completed' ? "Paid in full" : `₹${booking.advance_paid} advance`}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <span className="font-bold text-premium-ink">{formatCurrency(booking.total_amount)}</span>
+
+                    <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-50">
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                        <MapPin className="w-3 h-3 text-slate-300" />
+                        <span className="truncate">{booking.location || "At Studio"}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                        <Clock className="w-3 h-3 text-slate-300" />
+                        <span>{booking.time || "No time set"}</span>
+                      </div>
+                    </div>
+
+                    {booking.sessionNotes && (
+                      <div className="mt-4 p-3 bg-slate-50 rounded-xl border-l-2 border-premium-gold">
+                        <p className="text-[11px] text-slate-600 leading-relaxed italic">
+                          "{booking.sessionNotes}"
+                        </p>
+                      </div>
+                    )}
+
+                    {booking.photos && booking.photos.length > 0 && (
+                      <div className="flex gap-2 mt-4 overflow-x-auto pb-1 no-scrollbar">
+                        {booking.photos.map((photo, pIdx) => (
+                          <img 
+                            key={pIdx} 
+                            src={photo} 
+                            alt="Session" 
+                            referrerPolicy="no-referrer"
+                            className="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-slate-100" 
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {booking.sessionNotes && (
-                    <p className="text-xs text-slate-500 italic mt-2 bg-slate-50 p-2 rounded-lg border-l-2 border-premium-gold">
-                      "{booking.sessionNotes}"
-                    </p>
-                  )}
-                  {booking.photos && booking.photos.length > 0 && (
-                    <div className="flex gap-2 mt-3 overflow-x-auto pb-1 no-scrollbar">
-                      {booking.photos.map((photo, pIdx) => (
-                        <img 
-                          key={pIdx} 
-                          src={photo} 
-                          alt="Session" 
-                          referrerPolicy="no-referrer"
-                          className="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-slate-100" 
-                        />
-                      ))}
-                    </div>
-                  )}
                 </div>
               )) : (
-                <div className="text-center py-10">
-                  <p className="text-slate-500">No booking history yet.</p>
+                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+                  <Calendar className="w-12 h-12 text-slate-200 mx-auto mb-2" />
+                  <p className="text-slate-500 font-medium">No appointment history yet.</p>
                 </div>
               )}
             </motion.div>

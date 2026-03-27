@@ -73,6 +73,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
 
   const handleStatusChange = async (id: string, status: Booking['status']) => {
     if (id) {
+      if (status === 'cancelled' && !window.confirm('Are you sure you want to cancel this appointment?')) {
+        return;
+      }
       await updateBookingStatus(id, status);
     }
   };
@@ -267,14 +270,23 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ onBack, onAddBooking
                           {booking.services.length} Services • ₹{booking.total_amount}
                         </div>
                         <div className="flex gap-2">
-                          {booking.status !== 'completed' && (
-                            <button
-                              onClick={() => onCompleteAppointment(booking)}
-                              className="flex items-center gap-1 text-xs font-bold text-green-600 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                              Mark Done
-                            </button>
+                          {booking.status !== 'completed' && booking.status !== 'cancelled' && (
+                            <>
+                              <button
+                                onClick={() => onCompleteAppointment(booking)}
+                                className="flex items-center gap-1 text-xs font-bold text-green-600 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                                Mark Done
+                              </button>
+                              <button
+                                onClick={() => handleStatusChange(booking.booking_id!, 'cancelled')}
+                                className="flex items-center gap-1 text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
+                              >
+                                <X className="w-4 h-4" />
+                                Cancel
+                              </button>
+                            </>
                           )}
                           <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400">
                             <MoreVertical className="w-4 h-4" />
